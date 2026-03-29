@@ -29,7 +29,7 @@ Inheritance chain: base.html -> base_teacher.html -> specific_page.html
             </a>
         </div>
         <div class="nav-item">
-            <a href="{% url 'teacher:students' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'students' or request.resolver_match.url_name == 'student_add' or request.resolver_match.url_name == 'student_edit' %}active{% endif %}">
+            <a href="{% url 'teacher:students' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'students' or request.resolver_match.url_name == 'student_edit' %}active{% endif %}">
                 <i class="bi bi-people-fill"></i> Students
             </a>
         </div>
@@ -97,15 +97,6 @@ Inheritance chain: base.html -> base_teacher.html -> specific_page.html
                 {% block page_title %}OJT Tracking System{% endblock %}
                 <span>{% block page_subtitle %}Teacher Dashboard{% endblock %}</span>
             </div>
-        </div>
-
-        <div class="topbar-actions">
-            {% if pending_journals_count %}
-            <a href="{% url 'teacher:journals' %}?status=pending" class="action-btn" title="Pending Journals">
-                <i class="bi bi-journal-text"></i>
-                <span class="notif-dot"></span>
-            </a>
-            {% endif %}
         </div>
     </header>
 

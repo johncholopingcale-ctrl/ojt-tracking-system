@@ -171,8 +171,7 @@ class Assignment(models.Model):
       Example: self.student, self.company, self.start_date
     """
 
-    # CLASS VARIABLE - shared default value for all instances
-    DEFAULT_REQUIRED_HOURS = 486
+    # No default required hours - must be specified per assignment
 
     # INSTANCE VARIABLES (model fields)
     # Each Assignment object has its own unique values for these
@@ -200,8 +199,7 @@ class Assignment(models.Model):
     )
 
     required_hours = models.FloatField(
-        default=486,  # Using the class variable default
-        help_text="Total hours required to complete OJT"
+        help_text="Total hours required to complete OJT (must be specified)"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

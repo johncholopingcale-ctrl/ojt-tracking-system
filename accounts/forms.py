@@ -22,8 +22,15 @@ Form inheritance hierarchy:
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
+from django.core.validators import RegexValidator
 
 User = get_user_model()
+
+# Filipino phone number validator
+phone_validator = RegexValidator(
+    regex=r'^09\d{9}$',
+    message='Phone number must be in format: 09XXXXXXXXX (11 digits starting with 09)'
+)
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -101,6 +108,19 @@ class CustomUserCreationForm(UserCreationForm):
         help_text="Required for students"
     )
 
+    phone = forms.CharField(
+        max_length=11,
+        required=False,
+        validators=[phone_validator],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '09XXXXXXXXX',
+            'pattern': '09[0-9]{9}',
+            'title': 'Phone number must be 11 digits starting with 09'
+        }),
+        help_text="Filipino mobile number format: 09XXXXXXXXX"
+    )
+
     class Meta:
         """
         Meta class configuring the form's model binding.
@@ -111,7 +131,7 @@ class CustomUserCreationForm(UserCreationForm):
         This is a Django convention for separating configuration from behavior.
         """
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'department', 'company', 'password1', 'password2')
+        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'phone', 'department', 'company', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
         """
@@ -215,6 +235,18 @@ class UserProfileForm(forms.ModelForm):
     - Saving data to the model instance
     """
 
+    phone = forms.CharField(
+        max_length=11,
+        required=False,
+        validators=[phone_validator],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '09XXXXXXXXX',
+            'pattern': '09[0-9]{9}',
+            'title': 'Phone number must be 11 digits starting with 09'
+        })
+    )
+
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'phone', 'department', 'profile_pic')
@@ -222,7 +254,6 @@ class UserProfileForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone number'}),
             'department': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Department/Course'}),
             'profile_pic': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
@@ -236,6 +267,42 @@ class UserProfileForm(forms.ModelForm):
         This demonstrates how methods can use instance state (self.instance)
         to make context-aware decisions.
         """
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("This email is already in use by another account.")
+        return email
+
+
+class SupervisorProfileForm(forms.ModelForm):
+    """
+    Form for updating supervisor profile information.
+    Excludes department field as it should be read-only from registration.
+    """
+
+    phone = forms.CharField(
+        max_length=11,
+        required=False,
+        validators=[phone_validator],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '09XXXXXXXXX',
+            'pattern': '09[0-9]{9}',
+            'title': 'Phone number must be 11 digits starting with 09'
+        })
+    )
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email', 'phone', 'profile_pic')
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'profile_pic': forms.FileInput(attrs={'class': 'form-control-file'}),
+        }
+
+    def clean_email(self):
+        """Validate email uniqueness excluding current user."""
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("This email is already in use by another account.")

@@ -25,9 +25,9 @@ urlpatterns = [
     path('company/<int:pk>/delete/', views.CompanyDeleteView.as_view(), name='company_delete'),
     path('api/supervisor/<int:supervisor_id>/', views.get_supervisor_details, name='supervisor_details'),
 
-    # Student Management
+    # Student Management (View only - students register themselves)
     path('students/', views.StudentListView.as_view(), name='students'),
-    path('student/add/', views.StudentCreateView.as_view(), name='student_add'),
+    # path('student/add/', views.StudentCreateView.as_view(), name='student_add'),  # Removed - students self-register
     path('student/<int:pk>/edit/', views.StudentUpdateView.as_view(), name='student_edit'),
     path('student/<int:pk>/delete/', views.StudentDeleteView.as_view(), name='student_delete'),
     path('student/<int:pk>/reset-password/', views.StudentResetPasswordView.as_view(), name='student_reset_password'),

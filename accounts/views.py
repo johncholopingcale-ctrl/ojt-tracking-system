@@ -26,7 +26,7 @@ from django.views.generic import CreateView, UpdateView, TemplateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 
-from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserProfileForm
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserProfileForm, SupervisorProfileForm
 from .models import User
 from .mixins import StudentRequiredMixin, TeacherRequiredMixin, SupervisorRequiredMixin
 
@@ -283,7 +283,9 @@ class SupervisorProfileUpdateView(SupervisorRequiredMixin, BaseProfileUpdateView
     - SupervisorRequiredMixin for role checking
     - Supervisor-specific template
     - Supervisor-specific success URL
+    - SupervisorProfileForm (excludes department field)
     """
 
     template_name = 'supervisor/profile.html'
     success_url = reverse_lazy('supervisor:profile')
+    form_class = SupervisorProfileForm

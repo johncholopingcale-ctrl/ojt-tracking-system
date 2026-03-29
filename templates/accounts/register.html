@@ -284,7 +284,12 @@
                         <label for="id_password1" class="form-label">
                             <i class="bi bi-lock me-1"></i>Password
                         </label>
-                        <input type="password" name="password1" id="id_password1" class="form-control" placeholder="••••••••" required>
+                        <div class="input-group">
+                            <input type="password" name="password1" id="id_password1" class="form-control" placeholder="••••••••" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+                                <i class="bi bi-eye" id="togglePassword1Icon"></i>
+                            </button>
+                        </div>
                         {% if form.password1.errors %}
                             <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.password1.errors.0 }}</small>
                         {% endif %}
@@ -293,7 +298,12 @@
                         <label for="id_password2" class="form-label">
                             <i class="bi bi-lock-fill me-1"></i>Confirm Password
                         </label>
-                        <input type="password" name="password2" id="id_password2" class="form-control" placeholder="••••••••" required>
+                        <div class="input-group">
+                            <input type="password" name="password2" id="id_password2" class="form-control" placeholder="••••••••" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+                                <i class="bi bi-eye" id="togglePassword2Icon"></i>
+                            </button>
+                        </div>
                         {% if form.password2.errors %}
                             <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.password2.errors.0 }}</small>
                         {% endif %}
@@ -358,6 +368,38 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Run on role change
     roleSelect.addEventListener('change', toggleRoleFields);
+    
+    // Password toggle for password1
+    document.getElementById('togglePassword1').addEventListener('click', function() {
+        const passwordInput = document.getElementById('id_password1');
+        const passwordIcon = document.getElementById('togglePassword1Icon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordIcon.classList.remove('bi-eye');
+            passwordIcon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            passwordIcon.classList.remove('bi-eye-slash');
+            passwordIcon.classList.add('bi-eye');
+        }
+    });
+    
+    // Password toggle for password2
+    document.getElementById('togglePassword2').addEventListener('click', function() {
+        const passwordInput = document.getElementById('id_password2');
+        const passwordIcon = document.getElementById('togglePassword2Icon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordIcon.classList.remove('bi-eye');
+            passwordIcon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            passwordIcon.classList.remove('bi-eye-slash');
+            passwordIcon.classList.add('bi-eye');
+        }
+    });
 });
 </script>
 {% endblock %}

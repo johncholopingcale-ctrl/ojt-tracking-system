@@ -74,11 +74,12 @@
                     <div class="row g-3 mt-1">
                         <div class="col-md-6">
                             <label for="id_phone" class="form-label"><i class="bi bi-telephone me-1"></i>Phone Number</label>
-                            <input type="text" name="phone" id="id_phone" class="form-control" value="{{ form.phone.value|default_if_none:'' }}" placeholder="09XX-XXX-XXXX">
+                            <input type="text" name="phone" id="id_phone" class="form-control" value="{{ form.phone.value|default_if_none:'' }}" placeholder="09XXXXXXXXX">
                         </div>
                         <div class="col-md-6">
-                            <label for="id_department" class="form-label"><i class="bi bi-building me-1"></i>Department/Company</label>
-                            <input type="text" name="department" id="id_department" class="form-control" value="{{ form.department.value|default_if_none:'' }}" placeholder="e.g., Company Name">
+                            <label for="id_department" class="form-label"><i class="bi bi-building me-1"></i>Company</label>
+                            <input type="text" id="id_department_display" class="form-control" value="{{ user.department }}" readonly style="background-color: #f8f9fa;">
+                            <small style="font-size:11px;color:#888;">Company name from registration (cannot be changed)</small>
                         </div>
                     </div>
 
