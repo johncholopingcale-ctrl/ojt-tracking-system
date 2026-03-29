@@ -1,0 +1,116 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}{% if object %}Edit{% else %}Add{% endif %} Company{% endblock %}
+{% block page_subtitle %}{% if object %}Update company details{% else %}Register a new partner company{% endif %}{% endblock %}
+
+{% block teacher_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom">
+                <i class="bi bi-{% if object %}pencil-square{% else %}building-add{% endif %} me-2"></i>
+                {% if object %}Edit Company{% else %}Add New Company{% endif %}
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label" style="font-weight:600;">
+                            Company Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <small class="text-danger">{{ form.name.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_address" class="form-label" style="font-weight:600;">
+                            Address <span class="text-danger">*</span>
+                        </label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                        <small class="text-danger">{{ form.address.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_supervisor" class="form-label" style="font-weight:600;">
+                            Supervisor
+                        </label>
+                        {{ form.supervisor }}
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Select the supervisor who will manage interns at this company.</small>
+                        {% if form.supervisor.errors %}
+                        <small class="text-danger">{{ form.supervisor.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_contact_email" class="form-label" style="font-weight:600;">
+                                Contact Email
+                            </label>
+                            {{ form.contact_email }}
+                            {% if form.contact_email.errors %}
+                            <small class="text-danger">{{ form.contact_email.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_contact_phone" class="form-label" style="font-weight:600;">
+                                Contact Phone
+                            </label>
+                            {{ form.contact_phone }}
+                            {% if form.contact_phone.errors %}
+                            <small class="text-danger">{{ form.contact_phone.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius:10px;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <hr style="margin:20px 0;border-color:#e8e0d0;">
+
+                    <div style="display:flex;justify-content:space-between;">
+                        <a href="{% url 'teacher:companies' %}" class="btn-gold" style="padding:10px 20px;text-decoration:none;border-radius:10px;">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-lg me-1"></i> {% if object %}Update{% else %}Add{% endif %} Company
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+#id_name, #id_address, #id_supervisor, #id_contact_email, #id_contact_phone {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color .2s, box-shadow .2s;
+}
+#id_name:focus, #id_address:focus, #id_supervisor:focus, #id_contact_email:focus, #id_contact_phone:focus {
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 3px rgba(26,107,50,.1);
+    outline: none;
+}
+#id_address {
+    min-height: 80px;
+    resize: vertical;
+}
+</style>
+{% endblock %}
+{% endblock %}

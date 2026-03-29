@@ -1,0 +1,223 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}Student DTR{% endblock %}
+{% block page_subtitle %}{{ student.get_full_name }}'s time logs{% endblock %}
+
+{% block teacher_content %}
+<!-- Student Info Card -->
+<div class="card-wrap fade-up mb-4">
+    <div class="card-body-custom" style="padding:16px 20px;">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div style="display:flex;align-items:center;gap:14px;">
+                    {% if student.profile_pic %}
+                    <img src="{{ student.profile_pic.url }}" alt="" style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">
+                    {% else %}
+                    <div class="student-av" style="width:50px;height:50px;font-size:18px;">{{ student.get_initials }}</div>
+                    {% endif %}
+                    <div>
+                        <div style="font-weight:700;font-size:16px;">{{ student.get_full_name }}</div>
+                        <div style="font-size:12px;color:#888;">{{ student.email|default:"No email" }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div style="font-size:12px;color:#888;">Total Rendered Hours</div>
+                <div style="font-size:28px;font-weight:800;color:var(--green-main);">{{ total_hours|floatformat:1 }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DTR Logs Table -->
+<div class="card-wrap fade-up delay-1">
+    <div class="card-header-custom">
+        <i class="bi bi-clock-history me-2"></i>DTR Logs
+    </div>
+    {% if dtr_logs %}
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Selfie</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Hours</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in dtr_logs %}
+                <tr>
+                    <td>
+                        <span style="font-weight:600;color:var(--green-main);">{{ log.date|date:"M d" }}</span>
+                        <span style="font-size:11px;color:#888;display:block;">{{ log.date|date:"Y" }}</span>
+                    </td>
+                    <td>
+                        {% if log.selfie %}
+                        <img src="{{ log.selfie.url }}" alt="Selfie" 
+                             style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #e0e0e0;"
+                             data-bs-toggle="modal" data-bs-target="#selfieModal{{ log.pk }}">
+                        {% else %}
+                        <span style="font-size:11px;color:#aaa;">No selfie</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:13px;">
+                        <i class="bi bi-box-arrow-in-right me-1 text-success"></i>{{ log.get_time_in_formatted }}
+                    </td>
+                    <td style="font-size:13px;">
+                        <i class="bi bi-box-arrow-right me-1 text-danger"></i>{{ log.get_time_out_formatted }}
+                    </td>
+                    <td>
+                        <span class="status-badge status-completed">{{ log.hours_rendered|floatformat:2 }} hrs</span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                data-bs-toggle="modal" data-bs-target="#detailModal{{ log.pk }}"
+                                style="border-radius:8px;font-size:11px;padding:4px 10px;">
+                            <i class="bi bi-eye me-1"></i>View Details
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:12px 18px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;">
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" style="border-radius:8px 0 0 8px;">« Prev</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link" style="background:var(--green-main);color:#fff;border-color:var(--green-main);">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" style="border-radius:0 8px 8px 0;">Next »</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="card-body-custom text-center py-5">
+        <i class="bi bi-clock" style="font-size:48px;color:#ddd;"></i>
+        <p class="mt-3" style="color:#888;">No DTR logs found for this student.</p>
+    </div>
+    {% endif %}
+</div>
+
+<a href="{% url 'teacher:dashboard' %}" class="btn-gold mt-3" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;text-decoration:none;border-radius:10px;">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+</a>
+
+<!-- Selfie Modals -->
+{% for log in dtr_logs %}
+{% if log.selfie %}
+<div class="modal fade" id="selfieModal{{ log.pk }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+            <div class="modal-header" style="background:var(--green-main);color:#fff;border:none;">
+                <h6 class="modal-title"><i class="bi bi-camera me-2"></i>{{ log.date|date:"F d, Y" }}</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <img src="{{ log.selfie.url }}" alt="Selfie" style="width:100%;height:auto;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- DTR Detail Modals -->
+{% for log in dtr_logs %}
+<div class="modal fade" id="detailModal{{ log.pk }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+            <div class="modal-header" style="background:var(--green-main);color:#fff;border:none;">
+                <h6 class="modal-title"><i class="bi bi-calendar-check me-2"></i>DTR Details - {{ log.date|date:"F d, Y" }}</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+                <div class="row">
+                    <!-- Left Column: Selfie -->
+                    <div class="col-md-5 text-center mb-3 mb-md-0">
+                        {% if log.selfie %}
+                        <img src="{{ log.selfie.url }}" alt="Selfie" style="width:100%;max-width:250px;border-radius:12px;border:3px solid var(--gold);">
+                        <p class="mt-2" style="font-size:12px;color:#888;"><i class="bi bi-camera me-1"></i>Verification Selfie</p>
+                        {% else %}
+                        <div style="background:#f5f5f5;border-radius:12px;padding:40px;color:#aaa;">
+                            <i class="bi bi-person-bounding-box" style="font-size:48px;"></i>
+                            <p class="mt-2 mb-0">No selfie captured</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <!-- Right Column: Details -->
+                    <div class="col-md-7">
+                        <table class="table table-borderless" style="font-size:14px;">
+                            <tr>
+                                <td style="width:40%;color:#888;"><i class="bi bi-calendar3 me-2"></i>Date</td>
+                                <td style="font-weight:600;">{{ log.date|date:"l, F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-box-arrow-in-right me-2 text-success"></i>Time In</td>
+                                <td style="font-weight:600;">{{ log.get_time_in_formatted }}</td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-box-arrow-right me-2 text-danger"></i>Time Out</td>
+                                <td style="font-weight:600;">{{ log.get_time_out_formatted }}</td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-clock-history me-2 text-primary"></i>Hours Rendered</td>
+                                <td>
+                                    <span class="status-badge status-completed" style="font-size:14px;">
+                                        {{ log.hours_rendered|floatformat:2 }} hours
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-check-circle me-2"></i>Status</td>
+                                <td>
+                                    {% if log.is_complete %}
+                                    <span class="status-badge status-completed"><i class="bi bi-check-circle me-1"></i>Complete</span>
+                                    {% else %}
+                                    <span class="status-badge status-pending"><i class="bi bi-clock me-1"></i>Incomplete</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        {% if log.notes %}
+                        <div style="background:#f8f9fa;border-radius:10px;padding:14px;margin-top:12px;">
+                            <div style="font-size:12px;color:#888;margin-bottom:6px;"><i class="bi bi-chat-left-text me-1"></i>Notes</div>
+                            <div style="font-size:13px;color:#333;">{{ log.notes }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#aaa;">
+                            <i class="bi bi-clock me-1"></i>Created: {{ log.created_at|date:"M d, Y g:i A" }}
+                            {% if log.updated_at != log.created_at %}
+                            &nbsp;|&nbsp; <i class="bi bi-pencil me-1"></i>Updated: {{ log.updated_at|date:"M d, Y g:i A" }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border:none;padding:12px 24px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

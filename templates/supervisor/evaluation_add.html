@@ -1,0 +1,145 @@
+{% extends 'supervisor/base_supervisor.html' %}
+
+{% block page_title %}Add Evaluation{% endblock %}
+{% block page_subtitle %}Rate {{ student.get_full_name }}'s performance{% endblock %}
+
+{% block supervisor_content %}
+<div class="row g-4">
+    <!-- Main Form -->
+    <div class="col-lg-8">
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom" style="display:flex;align-items:center;gap:12px;">
+                {% if student.profile_pic %}
+                <img src="{{ student.profile_pic.url }}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">
+                {% else %}
+                <div class="student-av" style="width:40px;height:40px;font-size:14px;">{{ student.get_initials }}</div>
+                {% endif %}
+                <div>
+                    <strong>{{ student.get_full_name }}</strong>
+                    <div style="font-size:11px;color:rgba(255,255,255,.7);">Performance Evaluation</div>
+                </div>
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;display:flex;align-items:center;gap:8px;">
+                            <i class="bi bi-briefcase-fill text-success"></i> Work Quality <span class="text-danger">*</span>
+                        </label>
+                        <div class="rating-input">
+                            {{ form.work_quality }}
+                        </div>
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Rate the quality of work produced</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;display:flex;align-items:center;gap:8px;">
+                            <i class="bi bi-emoji-smile-fill text-warning"></i> Attitude <span class="text-danger">*</span>
+                        </label>
+                        <div class="rating-input">
+                            {{ form.attitude }}
+                        </div>
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Rate professional attitude and behavior</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:600;display:flex;align-items:center;gap:8px;">
+                            <i class="bi bi-star-fill text-primary"></i> Overall Rating <span class="text-danger">*</span>
+                        </label>
+                        <div class="rating-input">
+                            {{ form.overall_rating }}
+                        </div>
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Overall performance rating (can use decimals like 4.5)</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_recommendation" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-hand-thumbs-up me-1"></i> Recommendation
+                        </label>
+                        {{ form.recommendation }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_notes" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-chat-left-text me-1"></i> Additional Notes
+                        </label>
+                        {{ form.notes }}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius:10px;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div style="display:flex;gap:12px;margin-top:24px;">
+                        <button type="submit" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-lg me-1"></i> Submit Evaluation
+                        </button>
+                        <a href="{% url 'supervisor:dashboard' %}" class="btn-gold" style="padding:10px 20px;text-decoration:none;border-radius:10px;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Guide -->
+    <div class="col-lg-4">
+        <div class="card-wrap fade-up delay-1">
+            <div class="card-header-custom" style="background:linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);">
+                <i class="bi bi-info-circle me-2"></i>Rating Guide
+            </div>
+            <div class="card-body-custom">
+                <div style="font-size:13px;line-height:1.8;">
+                    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+                        <div style="background:var(--green-main);color:#fff;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">5</div>
+                        <div><strong>Excellent</strong> - Exceeds expectations</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+                        <div style="background:var(--green-light);color:#fff;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">4</div>
+                        <div><strong>Very Good</strong> - Above average</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+                        <div style="background:var(--gold);color:#333;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">3</div>
+                        <div><strong>Good</strong> - Meets expectations</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+                        <div style="background:var(--orange);color:#fff;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">2</div>
+                        <div><strong>Fair</strong> - Needs improvement</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <div style="background:#dc3545;color:#fff;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">1</div>
+                        <div><strong>Poor</strong> - Below expectations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+#id_work_quality, #id_attitude, #id_overall_rating, #id_recommendation, #id_notes {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color .2s, box-shadow .2s;
+}
+#id_work_quality:focus, #id_attitude:focus, #id_overall_rating:focus, #id_recommendation:focus, #id_notes:focus {
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 3px rgba(26,107,50,.1);
+    outline: none;
+}
+#id_notes {
+    min-height: 100px;
+    resize: vertical;
+}
+</style>
+{% endblock %}
+{% endblock %}

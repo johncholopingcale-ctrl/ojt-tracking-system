@@ -1,0 +1,233 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}Student Dashboard{% endblock %}
+{% block page_subtitle %}Overview of your OJT progress{% endblock %}
+
+{% block student_content %}
+<!-- Welcome Banner -->
+<div class="dashboard-banner fade-up">
+    <div class="banner-greeting">Welcome back, {{ user.first_name|default:user.username }}! 👋</div>
+    <div class="banner-sub">Track your OJT progress and submit your daily requirements</div>
+    {% if assignment %}
+    <div class="banner-chips">
+        <div class="banner-chip"><i class="bi bi-building-fill"></i> {{ company.name|default:"Not assigned" }}</div>
+        <div class="banner-chip"><i class="bi bi-clock-fill"></i> {{ required_hours|floatformat:0 }}-Hour Program</div>
+        <div class="banner-chip"><i class="bi bi-calendar-range"></i> {{ assignment.start_date|date:"M d" }} - {{ assignment.end_date|date:"M d, Y" }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Progress Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-1">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+                <div class="stat-num">{{ total_hours|floatformat:1 }}</div>
+                <div class="stat-label">Hours Rendered</div>
+                <div class="stat-change {% if progress_percentage >= 50 %}up{% else %}down{% endif %}">
+                    <i class="bi bi-{% if progress_percentage >= 50 %}arrow-up{% else %}arrow-down{% endif %}-short"></i>
+                    of {{ required_hours|floatformat:0 }} hrs required
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-2">
+        <div class="stat-card">
+            <div class="stat-icon gold"><i class="bi bi-percent"></i></div>
+            <div>
+                <div class="stat-num">{{ progress_percentage|floatformat:0 }}%</div>
+                <div class="stat-label">OJT Progress</div>
+                <div class="stat-change {% if progress_percentage >= 100 %}up{% elif progress_percentage >= 50 %}up{% else %}down{% endif %}">
+                    {% if progress_percentage >= 100 %}
+                        <i class="bi bi-check-circle-fill"></i> Completed!
+                    {% elif progress_percentage >= 75 %}
+                        <i class="bi bi-arrow-up-short"></i> Almost there!
+                    {% elif progress_percentage >= 50 %}
+                        <i class="bi bi-arrow-up-short"></i> Halfway done
+                    {% else %}
+                        <i class="bi bi-arrow-right-short"></i> Keep going!
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-3">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-journal-check"></i></div>
+            <div>
+                <div class="stat-num">{{ journal_stats.total }}</div>
+                <div class="stat-label">Journals Submitted</div>
+                <div class="stat-change up"><i class="bi bi-check-lg"></i> {{ journal_stats.approved }} approved</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-4">
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="stat-num">{{ journal_stats.pending }}</div>
+                <div class="stat-label">Pending Review</div>
+                {% if journal_stats.pending > 0 %}
+                <div class="stat-change down"><i class="bi bi-exclamation-circle"></i> Awaiting approval</div>
+                {% else %}
+                <div class="stat-change up"><i class="bi bi-check-circle"></i> All caught up!</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row g-3 mb-4">
+    <!-- OJT Assignment Card -->
+    <div class="col-12 col-xl-8 fade-up delay-2">
+        <div class="card-wrap">
+            <div class="card-header-custom">
+                <div class="section-title"><i class="bi bi-building me-2"></i>OJT Assignment</div>
+            </div>
+            <div class="card-body-custom">
+                {% if assignment %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="stat-icon green" style="width:44px;height:44px;font-size:18px;">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Company</div>
+                                <div style="font-weight:700;font-size:15px;">{{ company.name }}</div>
+                                <div style="font-size:12px;color:#666;">{{ company.address }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="stat-icon gold" style="width:44px;height:44px;font-size:18px;">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Supervisor</div>
+                                <div style="font-weight:700;font-size:15px;">{{ supervisor.get_full_name|default:"Not assigned" }}</div>
+                                <div style="font-size:12px;color:#666;">{{ supervisor.email|default:"" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span style="font-size:13px;font-weight:600;">Hours Progress</span>
+                        <span style="font-size:13px;font-weight:700;color:var(--green-main);">{{ total_hours|floatformat:1 }} / {{ required_hours|floatformat:0 }} hours</span>
+                    </div>
+                    <div class="progress-bar-custom" style="height:12px;">
+                        <div class="progress-fill {% if progress_percentage >= 100 %}fill-blue{% elif progress_percentage >= 50 %}fill-green{% else %}fill-gold{% endif %}" style="width:{{ progress_percentage|floatformat:0 }}%;"></div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-exclamation-circle" style="font-size:48px;color:#ddd;"></i>
+                    <p class="mt-3" style="color:#888;">No assignment yet. Please contact your teacher/coordinator.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-12 col-xl-4 fade-up delay-3">
+        <div class="overview-card">
+            <div class="section-title mb-3"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</div>
+            
+            <a href="{% url 'student:dtr_log' %}" class="d-block text-decoration-none mb-3">
+                <div class="d-flex align-items-center gap-3 p-3" style="background:rgba(26,107,50,.06);border-radius:12px;transition:all .2s;">
+                    <div class="stat-icon green" style="width:44px;height:44px;font-size:18px;">
+                        <i class="bi bi-clock-fill"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;color:var(--green-dark);font-size:14px;">Log DTR</div>
+                        <div style="font-size:11px;color:#888;">Record your daily time</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:var(--green-main);"></i>
+                </div>
+            </a>
+            
+            <a href="{% url 'student:journal_submit' %}" class="d-block text-decoration-none mb-3">
+                <div class="d-flex align-items-center gap-3 p-3" style="background:rgba(245,197,24,.1);border-radius:12px;transition:all .2s;">
+                    <div class="stat-icon gold" style="width:44px;height:44px;font-size:18px;">
+                        <i class="bi bi-journal-plus"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;color:var(--gold-dark);font-size:14px;">Submit Journal</div>
+                        <div style="font-size:11px;color:#888;">Write your weekly reflection</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:var(--gold-dark);"></i>
+                </div>
+            </a>
+            
+            <a href="{% url 'student:dtr_list' %}" class="d-block text-decoration-none">
+                <div class="d-flex align-items-center gap-3 p-3" style="background:rgba(59,130,246,.08);border-radius:12px;transition:all .2s;">
+                    <div class="stat-icon blue" style="width:44px;height:44px;font-size:18px;">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;color:#1d4ed8;font-size:14px;">View DTR History</div>
+                        <div style="font-size:11px;color:#888;">Check all your records</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:#3b82f6;"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent DTR Logs -->
+{% if recent_dtr %}
+<div class="fade-up delay-4">
+    <div class="section-header">
+        <div class="section-title"><i class="bi bi-clock-history me-2"></i>Recent DTR Logs <small>Last 5 entries</small></div>
+        <a href="{% url 'student:dtr_list' %}" class="btn-green"><i class="bi bi-eye"></i> View All</a>
+    </div>
+    <div class="card-wrap">
+        <div class="table-responsive">
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Hours</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_dtr %}
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;">{{ log.date|date:"M d, Y" }}</div>
+                            <div style="font-size:11px;color:#aaa;">{{ log.date|date:"l" }}</div>
+                        </td>
+                        <td>{{ log.get_time_in_formatted }}</td>
+                        <td>{{ log.get_time_out_formatted }}</td>
+                        <td>
+                            <span style="font-weight:700;color:var(--green-main);">{{ log.hours_rendered|floatformat:1 }} hrs</span>
+                        </td>
+                        <td>
+                            {% if log.hours_rendered >= 8 %}
+                            <span class="status-badge status-completed">Full Day</span>
+                            {% elif log.hours_rendered >= 4 %}
+                            <span class="status-badge status-active">Half Day</span>
+                            {% else %}
+                            <span class="status-badge status-pending">Partial</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

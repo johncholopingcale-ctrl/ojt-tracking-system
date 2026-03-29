@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - CHMSU OJT Tracking System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .register-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-main) 50%, var(--green-mid) 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 40px 20px;
+    }
+    .register-page::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: rgba(245,197,24,.1);
+    }
+    .register-page::after {
+        content: '';
+        position: absolute;
+        bottom: -150px;
+        left: -150px;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: rgba(245,197,24,.05);
+    }
+    .register-card {
+        background: var(--white);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        overflow: hidden;
+        width: 100%;
+        max-width: 520px;
+        position: relative;
+        z-index: 1;
+    }
+    .register-header {
+        background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-main) 100%);
+        padding: 25px 30px;
+        text-align: center;
+    }
+    .register-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 3px solid var(--gold);
+        background: radial-gradient(circle, var(--green-mid) 0%, var(--green-dark) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        color: var(--gold);
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        font-size: 11px;
+    }
+    .register-title {
+        font-family: 'Cinzel', serif;
+        font-size: 13px;
+        color: var(--gold);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 3px;
+    }
+    .register-subtitle {
+        font-size: 10px;
+        color: rgba(255,255,255,.6);
+    }
+    .register-body {
+        padding: 25px 30px;
+    }
+    .register-form .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 5px;
+    }
+    .register-form .form-control,
+    .register-form .form-select {
+        border: 1.5px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        transition: all .2s;
+    }
+    .register-form .form-control:focus,
+    .register-form .form-select:focus {
+        border-color: var(--green-mid);
+        box-shadow: 0 0 0 3px rgba(42,138,69,.15);
+    }
+    .btn-register {
+        width: 100%;
+        background: linear-gradient(135deg, var(--green-main) 0%, var(--green-mid) 100%);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-register:hover {
+        background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-main) 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26,107,50,.3);
+    }
+    .register-footer {
+        text-align: center;
+        padding: 15px 30px 20px;
+        border-top: 1px solid #f0f0f0;
+    }
+    .register-footer a {
+        color: var(--green-main);
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .register-footer a:hover {
+        color: var(--green-dark);
+        text-decoration: underline;
+    }
+    .alert-register {
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 12px;
+        margin-bottom: 15px;
+        border: none;
+    }
+    .alert-register.alert-danger,
+    .alert-register.alert-error {
+        background: rgba(239,68,68,.1);
+        color: #dc2626;
+    }
+    .alert-register.alert-success {
+        background: rgba(26,107,50,.1);
+        color: var(--green-dark);
+    }
+    .alert-register.alert-info {
+        background: rgba(59,130,246,.1);
+        color: #1d4ed8;
+    }
+    .alert-register.alert-warning {
+        background: rgba(245,197,24,.15);
+        color: #b45309;
+    }
+    .form-text {
+        font-size: 10px;
+        color: #999;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-page">
+    <div class="register-card">
+        <div class="register-header">
+            <div class="register-logo">CHMSU</div>
+            <div class="register-title">Carlos Hilado Memorial State University</div>
+            <div class="register-subtitle">OJT Tracking System</div>
+        </div>
+        
+        <div class="register-body">
+            <h5 style="font-family:'Cinzel',serif;font-weight:700;color:var(--green-dark);text-align:center;margin-bottom:20px;font-size:16px;">
+                <i class="bi bi-person-plus-fill me-2"></i>Create Account
+            </h5>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-register alert-{{ message.tags }}" role="alert" data-auto-dismiss="5000">
+                        <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% elif message.tags == 'danger' or message.tags == 'error' %}x-circle{% else %}info-circle{% endif %}-fill me-2"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" class="register-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-register alert-danger">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="id_first_name" class="form-label">
+                            <i class="bi bi-person me-1"></i>First Name
+                        </label>
+                        <input type="text" name="first_name" id="id_first_name" class="form-control" placeholder="Juan" value="{{ form.first_name.value|default:'' }}">
+                        {% if form.first_name.errors %}
+                            <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.first_name.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="id_last_name" class="form-label">
+                            <i class="bi bi-person me-1"></i>Last Name
+                        </label>
+                        <input type="text" name="last_name" id="id_last_name" class="form-control" placeholder="Dela Cruz" value="{{ form.last_name.value|default:'' }}">
+                        {% if form.last_name.errors %}
+                            <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.last_name.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label for="id_username" class="form-label">
+                        <i class="bi bi-at me-1"></i>Username
+                    </label>
+                    <input type="text" name="username" id="id_username" class="form-control" placeholder="juandelacruz" value="{{ form.username.value|default:'' }}" required>
+                    {% if form.username.errors %}
+                        <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.username.errors.0 }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <label for="id_email" class="form-label">
+                        <i class="bi bi-envelope me-1"></i>Email Address
+                    </label>
+                    <input type="email" name="email" id="id_email" class="form-control" placeholder="juan@chmsu.edu.ph" value="{{ form.email.value|default:'' }}">
+                    {% if form.email.errors %}
+                        <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.email.errors.0 }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <label for="id_role" class="form-label">
+                        <i class="bi bi-person-badge me-1"></i>Role
+                    </label>
+                    <select name="role" id="id_role" class="form-select" required>
+                        <option value="">Select your role...</option>
+                        <option value="student" {% if form.role.value == 'student' %}selected{% endif %}>👨‍🎓 Student</option>
+                        <option value="teacher" {% if form.role.value == 'teacher' %}selected{% endif %}>👨‍🏫 Teacher / Coordinator</option>
+                        <option value="supervisor" {% if form.role.value == 'supervisor' %}selected{% endif %}>👔 Company Supervisor</option>
+                    </select>
+                    <div class="form-text">Select your role in the OJT system</div>
+                    {% if form.role.errors %}
+                        <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.role.errors.0 }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <label for="id_password1" class="form-label">
+                            <i class="bi bi-lock me-1"></i>Password
+                        </label>
+                        <input type="password" name="password1" id="id_password1" class="form-control" placeholder="••••••••" required>
+                        {% if form.password1.errors %}
+                            <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.password1.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="id_password2" class="form-label">
+                            <i class="bi bi-lock-fill me-1"></i>Confirm Password
+                        </label>
+                        <input type="password" name="password2" id="id_password2" class="form-control" placeholder="••••••••" required>
+                        {% if form.password2.errors %}
+                            <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.password2.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-register mt-4">
+                    <i class="bi bi-person-plus-fill"></i> Create Account
+                </button>
+            </form>
+        </div>
+
+        <div class="register-footer">
+            <p style="font-size:13px;color:#888;margin-bottom:0;">
+                Already have an account? <a href="{% url 'accounts:login' %}">Sign in here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

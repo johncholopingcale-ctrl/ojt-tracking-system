@@ -1,0 +1,228 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}Log DTR{% endblock %}
+{% block page_subtitle %}Record your daily time{% endblock %}
+
+{% block extra_css %}
+<style>
+    #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    #webcam-video {
+        width: 100%;
+        border-radius: 12px;
+        background: #1a1a1a;
+    }
+    #selfie-preview {
+        width: 100%;
+        border-radius: 12px;
+        display: none;
+    }
+    #capture-canvas {
+        display: none;
+    }
+    .camera-placeholder {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        border-radius: 12px;
+        padding: 60px 20px;
+        text-align: center;
+        color: #666;
+    }
+    .camera-placeholder i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: #444;
+    }
+</style>
+{% endblock %}
+
+{% block student_content %}
+<!-- Header -->
+<div class="section-header fade-up">
+    <div class="section-title"><i class="bi bi-clock-fill me-2"></i>Log DTR</div>
+    <a href="{% url 'student:dtr_list' %}" class="btn-gold"><i class="bi bi-arrow-left"></i> Back to List</a>
+</div>
+
+<div class="row g-4">
+    <!-- Camera Section -->
+    <div class="col-12 col-lg-6 fade-up delay-1">
+        <div class="card-wrap">
+            <div class="card-header-custom">
+                <div class="section-title" style="margin:0;"><i class="bi bi-camera-fill me-2"></i>Selfie Capture</div>
+            </div>
+            <div class="card-body-custom text-center">
+                <div id="video-container">
+                    <div class="camera-placeholder" id="camera-placeholder">
+                        <i class="bi bi-camera-video"></i>
+                        <p class="mb-0">Click "Start Camera" to begin</p>
+                    </div>
+                    <video id="webcam-video" autoplay playsinline style="display:none;"></video>
+                </div>
+                <img id="selfie-preview" alt="Captured Selfie">
+                <canvas id="capture-canvas"></canvas>
+
+                <div class="mt-3 d-flex justify-content-center gap-2 flex-wrap">
+                    <button type="button" id="start-camera" class="btn-green">
+                        <i class="bi bi-camera-video-fill"></i> Start Camera
+                    </button>
+                    <button type="button" id="capture-btn" class="btn-gold" style="display: none;">
+                        <i class="bi bi-camera-fill"></i> Capture Selfie
+                    </button>
+                    <button type="button" id="retake-btn" class="btn-orange" style="display: none;">
+                        <i class="bi bi-arrow-clockwise"></i> Retake
+                    </button>
+                </div>
+                <small style="display:block;margin-top:12px;color:#888;font-size:11px;">
+                    <i class="bi bi-info-circle me-1"></i>A selfie is required for DTR verification
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="col-12 col-lg-6 fade-up delay-2">
+        <div class="card-wrap">
+            <div class="card-header-custom">
+                <div class="section-title" style="margin:0;"><i class="bi bi-pencil-square me-2"></i>DTR Details</div>
+            </div>
+            <div class="card-body-custom">
+                <form method="post" id="dtr-form">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_date" class="form-label"><i class="bi bi-calendar3 me-1"></i>Date</label>
+                        <input type="date" name="date" id="id_date" class="form-control" value="{{ form.date.value|default_if_none:'' }}" required>
+                        {% if form.date.errors %}
+                            <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.date.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label for="id_time_in" class="form-label"><i class="bi bi-box-arrow-in-right me-1"></i>Time In</label>
+                            <input type="time" name="time_in" id="id_time_in" class="form-control" value="{{ form.time_in.value|default_if_none:'' }}" required>
+                            {% if form.time_in.errors %}
+                                <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.time_in.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label for="id_time_out" class="form-label"><i class="bi bi-box-arrow-right me-1"></i>Time Out</label>
+                            <input type="time" name="time_out" id="id_time_out" class="form-control" value="{{ form.time_out.value|default_if_none:'' }}">
+                            <small style="font-size:10px;color:#999;">Optional - can be logged later</small>
+                            {% if form.time_out.errors %}
+                                <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.time_out.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3 mt-3">
+                        <label for="id_notes" class="form-label"><i class="bi bi-chat-left-text me-1"></i>Notes (Optional)</label>
+                        <textarea name="notes" id="id_notes" class="form-control" rows="3" placeholder="Any notes about your work today...">{{ form.notes.value|default_if_none:'' }}</textarea>
+                    </div>
+
+                    <!-- Hidden field for base64 selfie data -->
+                    <input type="hidden" name="selfie_data" id="selfie_data">
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-custom alert-danger-custom">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn-green flex-fill" id="submit-btn">
+                            <i class="bi bi-check-lg"></i> Save DTR
+                        </button>
+                        <a href="{% url 'student:dtr_list' %}" class="btn-gold">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const video = document.getElementById('webcam-video');
+const canvas = document.getElementById('capture-canvas');
+const preview = document.getElementById('selfie-preview');
+const placeholder = document.getElementById('camera-placeholder');
+const startBtn = document.getElementById('start-camera');
+const captureBtn = document.getElementById('capture-btn');
+const retakeBtn = document.getElementById('retake-btn');
+const selfieDataInput = document.getElementById('selfie_data');
+
+let stream = null;
+
+startBtn.addEventListener('click', async function() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: 640, height: 480 }
+        });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+        startBtn.style.display = 'none';
+        captureBtn.style.display = 'inline-flex';
+    } catch (err) {
+        alert('Unable to access camera. Please ensure camera permissions are granted.');
+        console.error('Camera error:', err);
+    }
+});
+
+captureBtn.addEventListener('click', function() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    selfieDataInput.value = dataUrl;
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+    video.style.display = 'none';
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'inline-flex';
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+
+retakeBtn.addEventListener('click', async function() {
+    selfieDataInput.value = '';
+    preview.style.display = 'none';
+    preview.src = '';
+    retakeBtn.style.display = 'none';
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: 640, height: 480 }
+        });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        captureBtn.style.display = 'inline-flex';
+    } catch (err) {
+        placeholder.style.display = 'block';
+        startBtn.style.display = 'inline-flex';
+    }
+});
+
+document.getElementById('dtr-form').addEventListener('submit', function(e) {
+    if (!selfieDataInput.value) {
+        e.preventDefault();
+        alert('Please capture a selfie before submitting.');
+    }
+});
+
+window.addEventListener('beforeunload', function() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+{% endblock %}

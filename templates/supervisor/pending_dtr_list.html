@@ -1,0 +1,130 @@
+{% extends 'supervisor/base_supervisor.html' %}
+
+{% block page_title %}Pending DTR Confirmations{% endblock %}
+{% block page_subtitle %}{{ pending_count }} DTR log{{ pending_count|pluralize }} awaiting your confirmation{% endblock %}
+
+{% block supervisor_content %}
+<!-- Pending DTR Logs Table -->
+<div class="card-wrap fade-up">
+    <div class="card-header-custom">
+        <i class="bi bi-hourglass-split me-2"></i>Pending DTR Logs
+    </div>
+    {% if dtr_logs %}
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Date</th>
+                    <th>Selfie</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Hours</th>
+                    <th style="width:120px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in dtr_logs %}
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            {% if log.student.profile_pic %}
+                            <img src="{{ log.student.profile_pic.url }}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">
+                            {% else %}
+                            <div class="student-av" style="width:36px;height:36px;font-size:12px;">{{ log.student.get_initials }}</div>
+                            {% endif %}
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">{{ log.student.get_full_name }}</div>
+                                <div style="font-size:11px;color:#888;">{{ log.student.department|default:"No dept" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-weight:600;color:var(--green-main);">{{ log.date|date:"M d" }}</span>
+                        <span style="font-size:11px;color:#888;display:block;">{{ log.date|date:"Y" }}</span>
+                    </td>
+                    <td>
+                        {% if log.selfie %}
+                        <img src="{{ log.selfie.url }}" alt="Selfie" 
+                             style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #e0e0e0;"
+                             data-bs-toggle="modal" data-bs-target="#selfieModal{{ log.pk }}">
+                        {% else %}
+                        <span style="font-size:11px;color:#aaa;">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:13px;">
+                        <i class="bi bi-box-arrow-in-right me-1 text-success"></i>{{ log.get_time_in_formatted }}
+                    </td>
+                    <td style="font-size:13px;">
+                        <i class="bi bi-box-arrow-right me-1 text-danger"></i>{{ log.get_time_out_formatted }}
+                    </td>
+                    <td>
+                        <span class="status-badge status-completed">{{ log.hours_rendered|floatformat:1 }} hrs</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'supervisor:dtr_confirm' log.pk %}" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
+                            <i class="bi bi-check-circle"></i> Review
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:12px 18px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;">
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" style="border-radius:8px 0 0 8px;">« Prev</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link" style="background:var(--green-main);color:#fff;border-color:var(--green-main);">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" style="border-radius:0 8px 8px 0;">Next »</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="card-body-custom text-center py-5">
+        <i class="bi bi-check-circle" style="font-size:48px;color:#28a745;"></i>
+        <p class="mt-3" style="color:#888;">All DTR logs have been reviewed. No pending confirmations!</p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-top:20px;">
+    <a href="{% url 'supervisor:dashboard' %}" class="btn-gold" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;text-decoration:none;border-radius:10px;">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<!-- Selfie Modals -->
+{% for log in dtr_logs %}
+{% if log.selfie %}
+<div class="modal fade" id="selfieModal{{ log.pk }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+            <div class="modal-header" style="background:var(--green-main);color:#fff;border:none;">
+                <h6 class="modal-title"><i class="bi bi-camera me-2"></i>{{ log.student.get_full_name }} - {{ log.date|date:"F d, Y" }}</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <img src="{{ log.selfie.url }}" alt="Selfie" style="width:100%;height:auto;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}

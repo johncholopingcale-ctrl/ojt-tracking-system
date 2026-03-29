@@ -1,0 +1,99 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}Students{% endblock %}
+{% block page_subtitle %}Manage student accounts{% endblock %}
+
+{% block teacher_content %}
+<!-- Header -->
+<div class="section-header fade-up">
+    <div class="section-title"><i class="bi bi-people-fill me-2"></i>Students <small>{{ students|length }} registered</small></div>
+    <a href="{% url 'teacher:student_add' %}" class="btn-green"><i class="bi bi-plus-lg"></i> Add Student</a>
+</div>
+
+<!-- Students Table -->
+<div class="card-wrap fade-up delay-1">
+    {% if students %}
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Username</th>
+                    <th>Department</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>
+                        <div class="student-cell">
+                            {% if student.profile_pic %}
+                            <img src="{{ student.profile_pic.url }}" alt="Profile" class="student-av" style="object-fit:cover;">
+                            {% else %}
+                            <div class="student-av">{{ student.get_initials }}</div>
+                            {% endif %}
+                            <div>
+                                <div class="student-name">{{ student.get_full_name|default:student.username }}</div>
+                                <div class="student-id">{{ student.email|default:"No email" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-size:13px;">{{ student.username }}</td>
+                    <td style="font-size:13px;">{{ student.department|default:"-" }}</td>
+                    <td style="font-size:13px;">{{ student.phone|default:"-" }}</td>
+                    <td>
+                        <div class="action-icons">
+                            <a href="{% url 'teacher:student_edit' student.pk %}" class="icon-btn edit" title="Edit">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <a href="{% url 'teacher:student_reset_password' student.pk %}" class="icon-btn view" title="Reset Password">
+                                <i class="bi bi-key-fill"></i>
+                            </a>
+                            <a href="{% url 'teacher:student_dtr' student.pk %}" class="icon-btn view" title="View DTR">
+                                <i class="bi bi-clock-history"></i>
+                            </a>
+                            <a href="{% url 'teacher:student_delete' student.pk %}" class="icon-btn delete" title="Delete">
+                                <i class="bi bi-trash3-fill"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:12px 18px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;">
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" style="border-radius:8px 0 0 8px;">« Prev</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link" style="background:var(--green-main);color:#fff;border-color:var(--green-main);">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" style="border-radius:0 8px 8px 0;">Next »</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-people" style="font-size:48px;color:#ddd;"></i>
+        <p class="mt-3" style="color:#888;">No students found.</p>
+        <a href="{% url 'teacher:student_add' %}" class="btn-green mt-2"><i class="bi bi-plus-lg"></i> Add Your First Student</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

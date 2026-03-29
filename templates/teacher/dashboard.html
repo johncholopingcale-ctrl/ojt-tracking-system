@@ -1,0 +1,187 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}Teacher Dashboard{% endblock %}
+{% block page_subtitle %}Overview of your students' OJT progress{% endblock %}
+
+{% block teacher_content %}
+<!-- Welcome Banner -->
+<div class="dashboard-banner fade-up">
+    <div class="banner-greeting">Good Day, {{ user.first_name|default:"Coordinator" }}! 👋</div>
+    <div class="banner-sub">Welcome to CHMSU OJT Tracking System — Monitor and manage your students' internship progress</div>
+    <div class="banner-chips">
+        <div class="banner-chip"><i class="bi bi-mortarboard-fill"></i> {{ total_students }} Students</div>
+        <div class="banner-chip"><i class="bi bi-journal-text"></i> {{ pending_journals_count }} Pending Journals</div>
+        <div class="banner-chip"><i class="bi bi-clock-fill"></i> 600-Hour Program</div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-1">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <div class="stat-num">{{ total_students }}</div>
+                <div class="stat-label">Total Students</div>
+                <div class="stat-change up"><i class="bi bi-mortarboard"></i> Under supervision</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-2">
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="bi bi-journal-text"></i></div>
+            <div>
+                <div class="stat-num">{{ pending_journals_count }}</div>
+                <div class="stat-label">Pending Journals</div>
+                {% if pending_journals_count > 0 %}
+                <div class="stat-change down"><i class="bi bi-exclamation-circle"></i> Needs review</div>
+                {% else %}
+                <div class="stat-change up"><i class="bi bi-check-circle"></i> All reviewed</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-3">
+        <div class="stat-card">
+            <div class="stat-icon gold"><i class="bi bi-building"></i></div>
+            <div>
+                <div class="stat-num">{% with students|length as count %}{{ count }}{% endwith %}</div>
+                <div class="stat-label">Assigned Students</div>
+                <div class="stat-change up"><i class="bi bi-link-45deg"></i> With companies</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3 fade-up delay-4">
+        <a href="{% url 'teacher:assign_student' %}" class="text-decoration-none">
+            <div class="stat-card" style="background:linear-gradient(135deg, var(--green-main), var(--green-mid));color:#fff;">
+                <div class="stat-icon" style="background:rgba(255,255,255,.2);color:#fff;"><i class="bi bi-person-plus-fill"></i></div>
+                <div>
+                    <div class="stat-num" style="color:#fff;">+</div>
+                    <div class="stat-label" style="color:rgba(255,255,255,.8);">Quick Action</div>
+                    <div class="stat-change" style="color:var(--gold);">Assign Student</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Students Table and Pending Journals -->
+<div class="row g-3 mb-4">
+    <!-- Students Table -->
+    <div class="col-12 col-xl-8 fade-up delay-2">
+        <div class="section-header">
+            <div class="section-title"><i class="bi bi-people-fill me-2"></i>Student OJT Records <small>{{ total_students }} students</small></div>
+            <a href="{% url 'teacher:student_add' %}" class="btn-green"><i class="bi bi-plus-lg"></i> Add Student</a>
+        </div>
+        <div class="card-wrap">
+            {% if students %}
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Company</th>
+                            <th>Progress</th>
+                            <th>Hours</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in students %}
+                        <tr>
+                            <td>
+                                <div class="student-cell">
+                                    <div class="student-av">{{ item.student.get_initials }}</div>
+                                    <div>
+                                        <div class="student-name">{{ item.student.get_full_name }}</div>
+                                        <div class="student-id">{{ item.student.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size:12.5px;">
+                                {% if item.assignment %}
+                                    {{ item.assignment.company.name }}
+                                {% else %}
+                                    <span class="status-badge status-pending">Not assigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress-wrap">
+                                    <div class="progress-bar-custom">
+                                        <div class="progress-fill {% if item.progress >= 100 %}fill-blue{% elif item.progress >= 50 %}fill-green{% else %}fill-gold{% endif %}" style="width:{{ item.progress|floatformat:0 }}%"></div>
+                                    </div>
+                                    <span class="progress-pct">{{ item.progress|floatformat:0 }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ item.rendered_hours|floatformat:1 }}</strong>
+                                <span style="color:#aaa;font-size:11px;">/{{ item.required_hours|floatformat:0 }}</span>
+                            </td>
+                            <td>
+                                <div class="action-icons">
+                                    <a href="{% url 'teacher:student_dtr' item.student.pk %}" class="icon-btn view" title="View DTR">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                    {% if item.assignment %}
+                                    <a href="{% url 'teacher:edit_assignment' item.assignment.pk %}" class="icon-btn edit" title="Edit Assignment">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    <a href="{% url 'teacher:delete_assignment' item.assignment.pk %}" class="icon-btn delete" title="Remove Assignment">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div style="padding:12px 18px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:12px;color:#aaa;">Showing {{ students|length }} students</span>
+                <a href="{% url 'teacher:students' %}" class="btn-green" style="padding:6px 14px;font-size:12px;">View All</a>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-people" style="font-size:48px;color:#ddd;"></i>
+                <p class="mt-3" style="color:#888;">No students found. Add students to get started.</p>
+                <a href="{% url 'teacher:student_add' %}" class="btn-green mt-2"><i class="bi bi-plus-lg"></i> Add Student</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pending Journals -->
+    <div class="col-12 col-xl-4 fade-up delay-3">
+        <div class="overview-card">
+            <div class="section-header" style="margin-bottom:12px;">
+                <div class="section-title"><i class="bi bi-journal-text me-2"></i>Pending Journals</div>
+                <a href="{% url 'teacher:journals' %}?status=pending" class="btn-gold" style="font-size:11px;padding:5px 12px;">View All</a>
+            </div>
+
+            {% if recent_journals %}
+                {% for journal in recent_journals %}
+                <a href="{% url 'teacher:journal_review' journal.pk %}" class="d-block text-decoration-none mb-2">
+                    <div class="d-flex gap-3 p-3" style="background:rgba(224,122,47,.06);border-radius:12px;transition:all .2s;">
+                        <div class="stat-icon orange" style="width:40px;height:40px;font-size:16px;flex-shrink:0;">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:700;color:var(--text-dark);font-size:13px;">Week {{ journal.week_number }} - {{ journal.student.get_full_name }}</div>
+                            <div style="font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ journal.content|truncatewords:8 }}</div>
+                            <div style="font-size:10px;color:#bbb;margin-top:2px;"><i class="bi bi-clock me-1"></i>{{ journal.submitted_at|timesince }} ago</div>
+                        </div>
+                        <span class="status-badge status-pending" style="align-self:center;">Pending</span>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-check-circle" style="font-size:40px;color:var(--green-mid);"></i>
+                    <p class="mt-2 mb-0" style="color:#888;font-size:13px;">All journals have been reviewed!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

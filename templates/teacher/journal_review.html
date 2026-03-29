@@ -1,0 +1,103 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}Review Journal{% endblock %}
+{% block page_subtitle %}Week {{ object.week_number }} submission{% endblock %}
+
+{% block teacher_content %}
+<div class="row g-4">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <!-- Journal Card -->
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom" style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    {% if object.student.profile_pic %}
+                    <img src="{{ object.student.profile_pic.url }}" alt="" class="student-av" style="width:40px;height:40px;object-fit:cover;">
+                    {% else %}
+                    <div class="student-av" style="width:40px;height:40px;font-size:14px;">{{ object.student.get_initials }}</div>
+                    {% endif %}
+                    <div>
+                        <strong style="font-size:15px;">{{ object.student.get_full_name }}</strong>
+                        <div style="font-size:11px;color:#888;">Week {{ object.week_number }} Journal</div>
+                    </div>
+                </div>
+                <span class="status-badge status-{% if object.status == 'pending' %}pending{% elif object.status == 'approved' %}approved{% else %}rejected{% endif %}">
+                    {{ object.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body-custom">
+                <div style="font-size:12px;color:#888;margin-bottom:16px;">
+                    <i class="bi bi-calendar3 me-1"></i> Submitted: {{ object.submitted_at|date:"F d, Y" }} at {{ object.submitted_at|time:"g:i A" }}
+                </div>
+
+                <h6 style="font-weight:700;color:var(--green-main);margin-bottom:10px;"><i class="bi bi-journal-text me-2"></i>Journal Content</h6>
+                <div style="background:var(--cream);border:1px solid #e8e0d0;border-radius:10px;padding:16px;white-space:pre-wrap;font-size:13.5px;line-height:1.7;margin-bottom:20px;">{{ object.content }}</div>
+
+                {% if object.feedback %}
+                <h6 style="font-weight:700;color:var(--orange);margin-bottom:10px;"><i class="bi bi-chat-left-text me-2"></i>Feedback</h6>
+                <div style="background:#fff8f0;border:1px solid #ffe0c0;border-radius:10px;padding:16px;white-space:pre-wrap;font-size:13.5px;line-height:1.7;">{{ object.feedback }}</div>
+                {% endif %}
+
+                {% if object.status == 'pending' %}
+                <hr style="margin:24px 0;border-color:#e8e0d0;">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="feedback" style="font-weight:600;margin-bottom:8px;display:block;">
+                            <i class="bi bi-chat-dots me-1"></i> Your Feedback
+                        </label>
+                        <textarea name="feedback" id="feedback" rows="4" class="form-control" 
+                                  style="border-radius:10px;border:1px solid #d0d0d0;font-size:13.5px;"
+                                  placeholder="Enter your feedback here...">{{ object.feedback }}</textarea>
+                        <small style="color:#888;font-size:11px;margin-top:4px;display:block;">Feedback is required when rejecting a journal.</small>
+                    </div>
+
+                    <div style="display:flex;gap:12px;">
+                        <button type="submit" name="approve" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-circle-fill me-1"></i> Approve
+                        </button>
+                        <button type="submit" name="reject" class="btn-orange" style="padding:10px 24px;">
+                            <i class="bi bi-x-circle-fill me-1"></i> Reject
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <a href="{% url 'teacher:journals' %}" class="btn-gold mt-3" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;text-decoration:none;border-radius:10px;">
+            <i class="bi bi-arrow-left"></i> Back to Journals
+        </a>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card-wrap fade-up delay-1">
+            <div class="card-header-custom">
+                <i class="bi bi-info-circle me-2"></i>Student Info
+            </div>
+            <div class="card-body-custom">
+                <div style="text-align:center;margin-bottom:16px;">
+                    {% if object.student.profile_pic %}
+                    <img src="{{ object.student.profile_pic.url }}" alt="" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);">
+                    {% else %}
+                    <div class="student-av" style="width:70px;height:70px;font-size:22px;margin:0 auto;">{{ object.student.get_initials }}</div>
+                    {% endif %}
+                    <div style="font-weight:700;font-size:15px;margin-top:10px;">{{ object.student.get_full_name }}</div>
+                    <div style="font-size:12px;color:#888;">{{ object.student.email|default:"No email" }}</div>
+                </div>
+                <div style="font-size:12px;border-top:1px solid #f0f0f0;padding-top:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#888;">Department</span>
+                        <span style="font-weight:600;">{{ object.student.department|default:"-" }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#888;">Phone</span>
+                        <span style="font-weight:600;">{{ object.student.phone|default:"-" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

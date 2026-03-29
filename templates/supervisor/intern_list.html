@@ -1,0 +1,107 @@
+{% extends 'supervisor/base_supervisor.html' %}
+
+{% block page_title %}My Interns{% endblock %}
+{% block page_subtitle %}Manage assigned students{% endblock %}
+
+{% block supervisor_content %}
+<!-- Header -->
+<div class="section-header fade-up">
+    <div class="section-title"><i class="bi bi-people-fill me-2"></i>My Interns <small>{{ assignments|length }} assigned</small></div>
+</div>
+
+<!-- Interns Table -->
+<div class="card-wrap fade-up delay-1">
+    {% if assignments %}
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Company</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assignment in assignments %}
+                <tr>
+                    <td>
+                        <div class="student-cell">
+                            {% if assignment.student.profile_pic %}
+                            <img src="{{ assignment.student.profile_pic.url }}" alt="" class="student-av" style="object-fit:cover;">
+                            {% else %}
+                            <div class="student-av">{{ assignment.student.get_initials }}</div>
+                            {% endif %}
+                            <div>
+                                <div class="student-name">{{ assignment.student.get_full_name }}</div>
+                                <div class="student-id">{{ assignment.student.email|default:"No email" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="stat-icon green" style="width:28px;height:28px;font-size:11px;">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <span style="font-size:13px;">{{ assignment.company.name }}</span>
+                        </div>
+                    </td>
+                    <td style="font-size:12px;">
+                        <div><i class="bi bi-calendar-event me-1 text-success"></i>{{ assignment.start_date|date:"M d, Y" }}</div>
+                        <div><i class="bi bi-calendar-check me-1 text-danger"></i>{{ assignment.end_date|date:"M d, Y" }}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-active">Active</span>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:8px;">
+                            <a href="{% url 'supervisor:intern_dtr' assignment.student.pk %}" 
+                               class="btn-gold" 
+                               style="padding:6px 12px;font-size:11px;text-decoration:none;border-radius:8px;display:inline-flex;align-items:center;gap:5px;">
+                                <i class="bi bi-clock-history"></i> DTR
+                            </a>
+                            <a href="{% url 'supervisor:evaluation_add' assignment.student.pk %}" 
+                               class="btn-green" 
+                               style="padding:6px 12px;font-size:11px;text-decoration:none;border-radius:8px;display:inline-flex;align-items:center;gap:5px;">
+                                <i class="bi bi-star-fill"></i> Evaluate
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:12px 18px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;">
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" style="border-radius:8px 0 0 8px;">« Prev</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link" style="background:var(--green-main);color:#fff;border-color:var(--green-main);">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" style="border-radius:0 8px 8px 0;">Next »</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-people" style="font-size:48px;color:#ddd;"></i>
+        <p class="mt-3" style="color:#888;">No interns assigned to your company.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

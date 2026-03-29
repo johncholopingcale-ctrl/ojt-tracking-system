@@ -1,0 +1,131 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}{% if object %}Edit{% else %}Add{% endif %} Student{% endblock %}
+{% block page_subtitle %}{% if object %}Update student details{% else %}Register a new student account{% endif %}{% endblock %}
+
+{% block teacher_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom">
+                <i class="bi bi-{% if object %}pencil-square{% else %}person-plus-fill{% endif %} me-2"></i>
+                {% if object %}Edit Student{% else %}Add New Student{% endif %}
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_first_name" class="form-label" style="font-weight:600;">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <small class="text-danger">{{ form.first_name.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_last_name" class="form-label" style="font-weight:600;">
+                                Last Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <small class="text-danger">{{ form.last_name.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label" style="font-weight:600;">
+                            Username <span class="text-danger">*</span>
+                        </label>
+                        {{ form.username }}
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Used for login.</small>
+                        {% if form.username.errors %}
+                        <small class="text-danger">{{ form.username.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label" style="font-weight:600;">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <small class="text-danger">{{ form.email.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_department" class="form-label" style="font-weight:600;">
+                                Department/Course
+                            </label>
+                            {{ form.department }}
+                            <small style="color:#888;font-size:11px;display:block;margin-top:4px;">e.g., BSIS, BSIT, BSCS</small>
+                            {% if form.department.errors %}
+                            <small class="text-danger">{{ form.department.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_phone" class="form-label" style="font-weight:600;">
+                                Phone
+                            </label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                            <small class="text-danger">{{ form.phone.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if not object %}
+                    <div style="background:linear-gradient(135deg, rgba(26,107,50,.08), rgba(245,197,24,.08));border:1px solid rgba(26,107,50,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+                        <i class="bi bi-info-circle me-2" style="color:var(--green-main);"></i>
+                        <span style="font-size:13px;">The student will be created with the default password: <strong style="color:var(--green-main);">student123</strong></span>
+                    </div>
+                    {% endif %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius:10px;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <hr style="margin:20px 0;border-color:#e8e0d0;">
+
+                    <div style="display:flex;justify-content:space-between;">
+                        <a href="{% url 'teacher:students' %}" class="btn-gold" style="padding:10px 20px;text-decoration:none;border-radius:10px;">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-lg me-1"></i> {% if object %}Update{% else %}Add{% endif %} Student
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+#id_first_name, #id_last_name, #id_username, #id_email, #id_department, #id_phone {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color .2s, box-shadow .2s;
+}
+#id_first_name:focus, #id_last_name:focus, #id_username:focus, #id_email:focus, #id_department:focus, #id_phone:focus {
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 3px rgba(26,107,50,.1);
+    outline: none;
+}
+</style>
+{% endblock %}
+{% endblock %}

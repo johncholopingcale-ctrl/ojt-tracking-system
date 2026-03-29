@@ -1,0 +1,18 @@
+# Environment
+.env
+venv/
+*.pyc
+__pycache__/
+
+# Database
+db.sqlite3
+
+# Static files
+staticfiles/
+
+# IDE
+.idea/
+.vscode/
+
+# Media (user uploads - optional, remove if you want to include)
+# media/

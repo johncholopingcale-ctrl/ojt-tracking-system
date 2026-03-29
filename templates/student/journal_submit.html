@@ -1,0 +1,106 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}Submit Journal{% endblock %}
+{% block page_subtitle %}Weekly reflection{% endblock %}
+
+{% block student_content %}
+<!-- Header -->
+<div class="section-header fade-up">
+    <div class="section-title"><i class="bi bi-journal-plus me-2"></i>Submit Weekly Journal</div>
+    <a href="{% url 'student:journal_list' %}" class="btn-gold"><i class="bi bi-arrow-left"></i> Back to List</a>
+</div>
+
+<div class="row g-4">
+    <!-- Form -->
+    <div class="col-12 col-lg-8 fade-up delay-1">
+        <div class="card-wrap">
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_week_number" class="form-label"><i class="bi bi-calendar-week me-1"></i>Week Number</label>
+                        <input type="number" name="week_number" id="id_week_number" class="form-control" min="1" max="52" value="{{ form.week_number.value|default_if_none:'' }}" placeholder="Enter week number (1-52)" required>
+                        <small style="font-size:11px;color:#888;">Enter the week number of your OJT</small>
+                        {% if form.week_number.errors %}
+                            <small class="text-danger d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ form.week_number.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_content" class="form-label"><i class="bi bi-pencil me-1"></i>Journal Content</label>
+                        <textarea name="content" id="id_content" class="form-control" rows="10" placeholder="Write your weekly reflection here... Describe what you learned, challenges faced, and your growth during this week." required>{{ form.content.value|default_if_none:'' }}</textarea>
+                        <small style="font-size:11px;color:#888;">Write your weekly reflection (minimum 50 characters)</small>
+                        {% if form.content.errors %}
+                            <small class="text-danger d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ form.content.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-custom alert-danger-custom">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn-green flex-fill">
+                            <i class="bi bi-send"></i> Submit Journal
+                        </button>
+                        <a href="{% url 'student:journal_list' %}" class="btn-gold">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="col-12 col-lg-4 fade-up delay-2">
+        <div class="overview-card">
+            <div class="section-title mb-3"><i class="bi bi-lightbulb me-2"></i>Tips for Writing</div>
+            
+            <div class="d-flex gap-3 mb-3 p-3" style="background:rgba(26,107,50,.06);border-radius:12px;">
+                <div class="stat-icon green" style="width:40px;height:40px;font-size:16px;flex-shrink:0;">
+                    <i class="bi bi-book"></i>
+                </div>
+                <div>
+                    <div style="font-weight:600;font-size:13px;color:var(--green-dark);">What You Learned</div>
+                    <div style="font-size:11px;color:#888;">Describe new skills or knowledge gained</div>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-3 mb-3 p-3" style="background:rgba(245,197,24,.1);border-radius:12px;">
+                <div class="stat-icon gold" style="width:40px;height:40px;font-size:16px;flex-shrink:0;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div style="font-weight:600;font-size:13px;color:var(--gold-dark);">Challenges Faced</div>
+                    <div style="font-size:11px;color:#888;">Mention difficulties and how you handled them</div>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-3 mb-3 p-3" style="background:rgba(59,130,246,.08);border-radius:12px;">
+                <div class="stat-icon blue" style="width:40px;height:40px;font-size:16px;flex-shrink:0;">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div>
+                    <div style="font-weight:600;font-size:13px;color:#1d4ed8;">Personal Growth</div>
+                    <div style="font-size:11px;color:#888;">Reflect on your development</div>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-3 p-3" style="background:rgba(224,122,47,.08);border-radius:12px;">
+                <div class="stat-icon orange" style="width:40px;height:40px;font-size:16px;flex-shrink:0;">
+                    <i class="bi bi-list-check"></i>
+                </div>
+                <div>
+                    <div style="font-weight:600;font-size:13px;color:var(--orange);">Specific Examples</div>
+                    <div style="font-size:11px;color:#888;">Include concrete details from your experience</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

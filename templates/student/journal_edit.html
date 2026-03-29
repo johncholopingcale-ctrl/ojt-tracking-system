@@ -1,0 +1,97 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}Edit Journal{% endblock %}
+{% block page_subtitle %}Week {{ object.week_number }}{% endblock %}
+
+{% block student_content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom">
+                <i class="bi bi-pencil-square me-2"></i>Edit Journal - Week {{ object.week_number }}
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_week_number" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-calendar-week me-1"></i> Week Number
+                        </label>
+                        {{ form.week_number }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_content" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-journal-text me-1"></i> Journal Content
+                        </label>
+                        {{ form.content }}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius:10px;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div style="display:flex;gap:12px;">
+                        <button type="submit" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-lg me-1"></i> Update Journal
+                        </button>
+                        <a href="{% url 'student:journal_list' %}" class="btn-gold" style="padding:10px 20px;text-decoration:none;border-radius:10px;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card-wrap fade-up delay-1">
+            <div class="card-header-custom">
+                <i class="bi bi-info-circle me-2"></i>Status
+            </div>
+            <div class="card-body-custom">
+                <div style="text-align:center;margin-bottom:16px;">
+                    <span class="status-badge status-{% if object.status == 'pending' %}pending{% elif object.status == 'approved' %}approved{% else %}rejected{% endif %}" style="font-size:14px;padding:8px 16px;">
+                        {{ object.get_status_display }}
+                    </span>
+                </div>
+                <div style="font-size:12px;color:#888;text-align:center;">
+                    Submitted {{ object.submitted_at|date:"M d, Y" }}
+                </div>
+                {% if object.feedback %}
+                <hr style="margin:16px 0;border-color:#e8e0d0;">
+                <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:8px;">Feedback:</div>
+                <div style="font-size:13px;background:var(--cream);padding:12px;border-radius:8px;">{{ object.feedback }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+#id_week_number, #id_content {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color .2s, box-shadow .2s;
+}
+#id_week_number:focus, #id_content:focus {
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 3px rgba(26,107,50,.1);
+    outline: none;
+}
+#id_content {
+    min-height: 250px;
+    resize: vertical;
+}
+</style>
+{% endblock %}
+{% endblock %}

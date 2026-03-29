@@ -1,0 +1,132 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}Assign Student{% endblock %}
+{% block page_subtitle %}Link student to company{% endblock %}
+
+{% block teacher_content %}
+<div class="row g-4">
+    <!-- Main Form -->
+    <div class="col-lg-8">
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom">
+                <i class="bi bi-person-plus-fill me-2"></i>Student Assignment Form
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_student" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-person me-1"></i> Student
+                        </label>
+                        {{ form.student }}
+                        {% if form.student.errors %}
+                        <small class="text-danger">{{ form.student.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_company" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-building me-1"></i> Company
+                        </label>
+                        {{ form.company }}
+                        {% if form.company.errors %}
+                        <small class="text-danger">{{ form.company.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_start_date" class="form-label" style="font-weight:600;">
+                                <i class="bi bi-calendar-event me-1"></i> Start Date
+                            </label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <small class="text-danger">{{ form.start_date.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_end_date" class="form-label" style="font-weight:600;">
+                                <i class="bi bi-calendar-check me-1"></i> End Date
+                            </label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <small class="text-danger">{{ form.end_date.errors.0 }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_required_hours" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-clock me-1"></i> Required Hours
+                        </label>
+                        {{ form.required_hours }}
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Default is 486 hours for CHMSU OJT program</small>
+                        {% if form.required_hours.errors %}
+                        <small class="text-danger">{{ form.required_hours.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius:10px;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div style="display:flex;gap:12px;margin-top:20px;">
+                        <button type="submit" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-lg me-1"></i> Save Assignment
+                        </button>
+                        <a href="{% url 'teacher:dashboard' %}" class="btn-gold" style="padding:10px 24px;text-decoration:none;border-radius:10px;">
+                            <i class="bi bi-x-lg me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Tips -->
+    <div class="col-lg-4">
+        <div class="card-wrap fade-up delay-1">
+            <div class="card-header-custom">
+                <i class="bi bi-lightbulb me-2"></i>Assignment Tips
+            </div>
+            <div class="card-body-custom">
+                <div style="font-size:13px;line-height:1.7;">
+                    <p style="margin-bottom:12px;"><strong style="color:var(--green-main);">Before assigning:</strong></p>
+                    <ul style="padding-left:18px;color:#666;">
+                        <li>Ensure the company has an assigned supervisor</li>
+                        <li>Verify student availability during the date range</li>
+                        <li>Check if required hours match program requirements</li>
+                    </ul>
+                    <hr style="margin:16px 0;border-color:#e8e0d0;">
+                    <p style="margin-bottom:8px;"><strong style="color:var(--orange);">Note:</strong></p>
+                    <p style="color:#888;font-size:12px;">Students can only be assigned to one company at a time. Previous assignments will be marked as completed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+#id_student, #id_company, #id_start_date, #id_end_date, #id_required_hours {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color .2s, box-shadow .2s;
+}
+#id_student:focus, #id_company:focus, #id_start_date:focus, #id_end_date:focus, #id_required_hours:focus {
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 3px rgba(26,107,50,.1);
+    outline: none;
+}
+</style>
+{% endblock %}
+{% endblock %}

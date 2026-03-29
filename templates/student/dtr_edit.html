@@ -1,0 +1,100 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}Edit DTR{% endblock %}
+{% block page_subtitle %}Update time log{% endblock %}
+
+{% block student_content %}
+<div class="row g-4">
+    {% if object.selfie %}
+    <div class="col-lg-5">
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom">
+                <i class="bi bi-camera me-2"></i>Selfie Photo
+            </div>
+            <div class="card-body-custom p-0">
+                <img src="{{ object.selfie.url }}" style="width:100%;border-radius:0 0 12px 12px;" alt="Selfie">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="{% if object.selfie %}col-lg-7{% else %}col-lg-8{% endif %}">
+        <div class="card-wrap fade-up {% if not object.selfie %}delay-1{% endif %}">
+            <div class="card-header-custom">
+                <i class="bi bi-pencil-square me-2"></i>Edit DTR Log
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_date" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-calendar3 me-1"></i> Date
+                        </label>
+                        {{ form.date }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label for="id_time_in" class="form-label" style="font-weight:600;">
+                                <i class="bi bi-box-arrow-in-right me-1 text-success"></i> Time In
+                            </label>
+                            {{ form.time_in }}
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label for="id_time_out" class="form-label" style="font-weight:600;">
+                                <i class="bi bi-box-arrow-right me-1 text-danger"></i> Time Out
+                            </label>
+                            {{ form.time_out }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_notes" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-sticky me-1"></i> Notes
+                        </label>
+                        {{ form.notes }}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius:10px;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div style="display:flex;gap:12px;">
+                        <button type="submit" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-lg me-1"></i> Update
+                        </button>
+                        <a href="{% url 'student:dtr_list' %}" class="btn-gold" style="padding:10px 20px;text-decoration:none;border-radius:10px;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+#id_date, #id_time_in, #id_time_out, #id_notes {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color .2s, box-shadow .2s;
+}
+#id_date:focus, #id_time_in:focus, #id_time_out:focus, #id_notes:focus {
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 3px rgba(26,107,50,.1);
+    outline: none;
+}
+#id_notes {
+    min-height: 80px;
+    resize: vertical;
+}
+</style>
+{% endblock %}
+{% endblock %}

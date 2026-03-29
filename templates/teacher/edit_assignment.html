@@ -1,0 +1,91 @@
+{% extends 'teacher/base_teacher.html' %}
+
+{% block page_title %}Edit Assignment{% endblock %}
+{% block page_subtitle %}Update student placement{% endblock %}
+
+{% block teacher_content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-wrap fade-up">
+            <div class="card-header-custom">
+                <i class="bi bi-pencil-square me-2"></i>Edit Assignment
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_student" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-person me-1"></i> Student
+                        </label>
+                        {{ form.student }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_company" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-building me-1"></i> Company
+                        </label>
+                        {{ form.company }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_start_date" class="form-label" style="font-weight:600;">
+                                <i class="bi bi-calendar-event me-1"></i> Start Date
+                            </label>
+                            {{ form.start_date }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_end_date" class="form-label" style="font-weight:600;">
+                                <i class="bi bi-calendar-check me-1"></i> End Date
+                            </label>
+                            {{ form.end_date }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_required_hours" class="form-label" style="font-weight:600;">
+                            <i class="bi bi-clock me-1"></i> Required Hours
+                        </label>
+                        {{ form.required_hours }}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius:10px;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div style="display:flex;gap:12px;margin-top:20px;">
+                        <button type="submit" class="btn-green" style="padding:10px 24px;">
+                            <i class="bi bi-check-lg me-1"></i> Update Assignment
+                        </button>
+                        <a href="{% url 'teacher:dashboard' %}" class="btn-gold" style="padding:10px 20px;text-decoration:none;border-radius:10px;">
+                            <i class="bi bi-x-lg me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+#id_student, #id_company, #id_start_date, #id_end_date, #id_required_hours {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color .2s, box-shadow .2s;
+}
+#id_student:focus, #id_company:focus, #id_start_date:focus, #id_end_date:focus, #id_required_hours:focus {
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 3px rgba(26,107,50,.1);
+    outline: none;
+}
+</style>
+{% endblock %}
+{% endblock %}
