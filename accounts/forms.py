@@ -90,6 +90,17 @@ class CustomUserCreationForm(UserCreationForm):
         help_text="Required for supervisors"
     )
 
+    department = forms.CharField(
+        max_length=100,
+        required=False,
+        label='Course/Program',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., BSIS, BSIT, BSCS'
+        }),
+        help_text="Required for students"
+    )
+
     class Meta:
         """
         Meta class configuring the form's model binding.
@@ -100,7 +111,7 @@ class CustomUserCreationForm(UserCreationForm):
         This is a Django convention for separating configuration from behavior.
         """
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'company', 'password1', 'password2')
+        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'department', 'company', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
         """
@@ -145,14 +156,18 @@ class CustomUserCreationForm(UserCreationForm):
 
     def clean(self):
         """
-        Validate that company is provided for supervisors.
+        Validate that company is provided for supervisors and department for students.
         """
         cleaned_data = super().clean()
         role = cleaned_data.get('role')
         company = cleaned_data.get('company')
+        department = cleaned_data.get('department')
 
         if role == 'supervisor' and not company:
             self.add_error('company', 'Company name is required for supervisors.')
+
+        if role == 'student' and not department:
+            self.add_error('department', 'Course/Program is required for students.')
 
         return cleaned_data
 

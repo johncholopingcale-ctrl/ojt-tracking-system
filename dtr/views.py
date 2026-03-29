@@ -26,7 +26,7 @@ from accounts.mixins import StudentRequiredMixin
 from accounts.utils import FileHandler
 from accounts.views import ProfileUpdateView
 from .models import DTRLog
-from .forms import DTRLogForm, DTREditForm
+from .forms import DTRLogForm, DTREditForm, DTRLogInForm, DTRLogOutForm
 from companies.models import Assignment
 from journals.models import Journal
 from evaluations.models import Evaluation
@@ -213,6 +213,127 @@ class DTRLogCreateView(StudentRequiredMixin, CreateView):
             return self.form_invalid(form)
         except Exception as e:
             messages.error(self.request, f"Error processing selfie: {str(e)}")
+            return self.form_invalid(form)
+
+
+class DTRLogInView(StudentRequiredMixin, CreateView):
+    """
+    Log in (time_in) - Create new DTR entry with selfie.
+    
+    OOP Concept: SEPARATION OF CONCERNS
+    ----------------------------------
+    Separate view for logging in vs logging out.
+    
+    CRUD Operation: CREATE - Creating new DTR record with time_in only
+    """
+    
+    model = DTRLog
+    form_class = DTRLogInForm
+    template_name = 'student/dtr_log_in.html'
+    success_url = reverse_lazy('student:dtr_list')
+    
+    def get_form(self, form_class=None):
+        """Set the student on the form instance."""
+        form = super().get_form(form_class)
+        form.instance.student = self.request.user
+        return form
+    
+    def form_valid(self, form):
+        """Handle log-in with selfie processing."""
+        try:
+            # Set the student to current user
+            form.instance.student = self.request.user
+            
+            # Check if student already logged in today
+            today_log = DTRLog.objects.filter(
+                student=self.request.user,
+                date=form.instance.date
+            ).first()
+            
+            if today_log:
+                messages.error(self.request, f"You already logged in on {form.instance.date}. Please log out instead.")
+                return self.form_invalid(form)
+            
+            # Process selfie from base64 data
+            selfie_data = form.cleaned_data.get('selfie_data') or self.request.POST.get('selfie_data')
+            
+            if selfie_data and selfie_data.startswith('data:image'):
+                # Use FileHandler to convert base64 to file
+                selfie_file = FileHandler.save_base64_image(selfie_data, 'selfie')
+                form.instance.selfie = selfie_file
+            elif not form.instance.selfie:
+                messages.error(self.request, "Please capture a selfie before submitting.")
+                return self.form_invalid(form)
+            
+            response = super().form_valid(form)
+            messages.success(self.request, "Logged in successfully! Don't forget to log out later.")
+            return response
+            
+        except OJTValidationError as e:
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"Error processing selfie: {str(e)}")
+            return self.form_invalid(form)
+
+
+class DTRLogOutView(StudentRequiredMixin, UpdateView):
+    """
+    Log out (time_out) - Update today's DTR entry.
+    
+    OOP Concept: SEPARATION OF CONCERNS
+    ----------------------------------
+    Separate view for logging out.
+    
+    CRUD Operation: UPDATE - Updating DTR record with time_out
+    """
+    
+    model = DTRLog
+    form_class = DTRLogOutForm
+    template_name = 'student/dtr_log_out.html'
+    success_url = reverse_lazy('student:dtr_list')
+    
+    def get_object(self, queryset=None):
+        """Get today's DTR entry for the student."""
+        from datetime import date
+        try:
+            return DTRLog.objects.get(
+                student=self.request.user,
+                date=date.today()
+            )
+        except DTRLog.DoesNotExist:
+            return None
+    
+    def get(self, request, *args, **kwargs):
+        """Check if there's a log-in entry to log out from."""
+        self.object = self.get_object()
+        if not self.object:
+            messages.error(request, "You haven't logged in today. Please log in first.")
+            return redirect('student:dtr_log_in')
+        if self.object.time_out:
+            messages.warning(request, f"You already logged out today at {self.object.get_time_out_formatted()}.")
+            return redirect('student:dtr_list')
+        return super().get(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        """Handle log-out submission."""
+        self.object = self.get_object()
+        if not self.object:
+            messages.error(request, "You haven't logged in today. Please log in first.")
+            return redirect('student:dtr_log_in')
+        if self.object.time_out:
+            messages.warning(request, "You already logged out today.")
+            return redirect('student:dtr_list')
+        return super().post(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        """Handle log-out with success message."""
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, f"Logged out successfully! Total hours: {self.object.get_hours_rendered()}")
+            return response
+        except OJTValidationError as e:
+            messages.error(self.request, str(e))
             return self.form_invalid(form)
 
 

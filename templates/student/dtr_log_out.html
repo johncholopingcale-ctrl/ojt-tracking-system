@@ -1,0 +1,70 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}Log Out - DTR{% endblock %}
+{% block page_subtitle %}Record your clock-out time{% endblock %}
+
+{% block student_content %}
+<!-- Header -->
+<div class="section-header fade-up">
+    <div class="section-title"><i class="bi bi-box-arrow-right me-2"></i>Log Out - DTR</div>
+    <a href="{% url 'student:dtr_list' %}" class="btn-gold"><i class="bi bi-arrow-left"></i> Back to List</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-6 fade-up delay-1">
+        <div class="card-wrap">
+            <div class="card-header-custom">
+                <div class="section-title" style="margin:0;"><i class="bi bi-box-arrow-right me-2"></i>Clock-Out</div>
+            </div>
+            <div class="card-body-custom">
+                <!-- Summary of log-in -->
+                <div class="alert alert-custom" style="background: rgba(42,138,69,.1); border-color: var(--green-mid);">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <i class="bi bi-info-circle-fill" style="font-size:24px; color:var(--green-main);"></i>
+                        <div>
+                            <strong>Today's Log-In</strong><br>
+                            <small>Date: {{ object.date }}</small><br>
+                            <small>Time In: {{ object.get_time_in_formatted }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_time_out" class="form-label"><i class="bi bi-box-arrow-right me-1"></i>Clock-Out Time</label>
+                        <input type="time" name="time_out" id="id_time_out" class="form-control" value="{{ form.time_out.value|default_if_none:'' }}" required>
+                        {% if form.time_out.errors %}
+                            <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.time_out.errors.0 }}</small>
+                        {% endif %}
+                        <small style="font-size:11px;color:#999;">Must be after your log-in time</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_notes" class="form-label"><i class="bi bi-chat-left-text me-1"></i>Notes (Optional)</label>
+                        <textarea name="notes" id="id_notes" class="form-control" rows="4" placeholder="Add or update notes about your work today...">{{ form.notes.value|default_if_none:'' }}</textarea>
+                        <small style="font-size:11px;color:#999;">Update your notes if needed</small>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-custom alert-danger-custom">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn-green flex-fill">
+                            <i class="bi bi-check-lg"></i> Log Out
+                        </button>
+                        <a href="{% url 'student:dtr_list' %}" class="btn-gold">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

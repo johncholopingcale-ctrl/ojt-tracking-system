@@ -8,7 +8,93 @@ Forms encapsulate data collection and validation.
 
 from django import forms
 from django.utils import timezone
+from datetime import date
 from .models import DTRLog
+
+
+class DTRLogInForm(forms.ModelForm):
+    """
+    Form for logging in (time_in only) with selfie capture.
+    
+    OOP Concept: SPECIALIZED FORM
+    ----------------------------
+    This form handles only log-in, creating a new DTR entry.
+    """
+
+    # Hidden field for base64 selfie data from webcam
+    selfie_data = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False
+    )
+
+    class Meta:
+        model = DTRLog
+        fields = ['date', 'time_in', 'notes']
+        widgets = {
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+            }),
+            'time_in': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time',
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional notes about today\'s activities...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set today as default date
+        if not self.instance.pk:
+            self.fields['date'].initial = date.today()
+        # Set helpful labels
+        self.fields['date'].label = 'Date'
+        self.fields['time_in'].label = 'Log In Time'
+
+
+class DTRLogOutForm(forms.ModelForm):
+    """
+    Form for logging out (time_out only).
+    
+    OOP Concept: SPECIALIZED FORM
+    ----------------------------
+    This form handles only log-out, updating existing DTR entry.
+    """
+
+    class Meta:
+        model = DTRLog
+        fields = ['time_out', 'notes']
+        widgets = {
+            'time_out': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time',
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional notes about today\'s activities...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['time_out'].label = 'Log Out Time'
+
+    def clean_time_out(self):
+        """
+        Validate that time_out is after time_in.
+        """
+        time_out = self.cleaned_data.get('time_out')
+        if self.instance and self.instance.time_in:
+            if time_out <= self.instance.time_in:
+                raise forms.ValidationError(
+                    "Log out time must be after log in time."
+                )
+        return time_out
 
 
 class DTRLogForm(forms.ModelForm):
