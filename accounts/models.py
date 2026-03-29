@@ -107,6 +107,12 @@ class User(AbstractUser):
         help_text="Department or course (e.g., BSIS, BSIT)"
     )
 
+    company = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Company name (for supervisors)"
+    )
+
     class Meta:
         """
         Meta options for the User model.

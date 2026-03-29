@@ -80,6 +80,16 @@ class CustomUserCreationForm(UserCreationForm):
         })
     )
 
+    company = forms.CharField(
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Company/Organization name'
+        }),
+        help_text="Required for supervisors"
+    )
+
     class Meta:
         """
         Meta class configuring the form's model binding.
@@ -90,7 +100,7 @@ class CustomUserCreationForm(UserCreationForm):
         This is a Django convention for separating configuration from behavior.
         """
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'password1', 'password2')
+        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'company', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
         """
@@ -132,6 +142,19 @@ class CustomUserCreationForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("This email is already registered.")
         return email
+
+    def clean(self):
+        """
+        Validate that company is provided for supervisors.
+        """
+        cleaned_data = super().clean()
+        role = cleaned_data.get('role')
+        company = cleaned_data.get('company')
+
+        if role == 'supervisor' and not company:
+            self.add_error('company', 'Company name is required for supervisors.')
+
+        return cleaned_data
 
 
 class CustomAuthenticationForm(AuthenticationForm):
