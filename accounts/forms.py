@@ -156,7 +156,7 @@ class CustomUserCreationForm(UserCreationForm):
 
     def clean(self):
         """
-        Validate that company is provided for supervisors and department for students.
+        Validate that company is provided for supervisors and department for students/teachers.
         """
         cleaned_data = super().clean()
         role = cleaned_data.get('role')
@@ -168,6 +168,9 @@ class CustomUserCreationForm(UserCreationForm):
 
         if role == 'student' and not department:
             self.add_error('department', 'Course/Program is required for students.')
+
+        if role == 'teacher' and not department:
+            self.add_error('department', 'Program/Course is required for coordinators.')
 
         return cleaned_data
 

@@ -30,8 +30,8 @@
                 
                 {% if user.department %}
                 <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f0f0f0;">
-                    <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Department</div>
-                    <div style="font-weight:600;color:var(--text-dark);">{{ user.department }}</div>
+                    <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Program Coordinator</div>
+                    <div style="font-weight:600;color:var(--green-main);"><i class="bi bi-mortarboard-fill me-1"></i>{{ user.department }}</div>
                 </div>
                 {% endif %}
                 
@@ -77,8 +77,9 @@
                             <input type="text" name="phone" id="id_phone" class="form-control" value="{{ form.phone.value|default_if_none:'' }}" placeholder="09XX-XXX-XXXX">
                         </div>
                         <div class="col-md-6">
-                            <label for="id_department" class="form-label"><i class="bi bi-building me-1"></i>Department/Course</label>
-                            <input type="text" name="department" id="id_department" class="form-control" value="{{ form.department.value|default_if_none:'' }}" placeholder="e.g., BSIS, BSIT">
+                            <label for="id_department" class="form-label"><i class="bi bi-mortarboard-fill me-1"></i>Program/Course</label>
+                            <input type="text" name="department" id="id_department" class="form-control" value="{{ form.department.value|default_if_none:'' }}" placeholder="e.g., BSIS, BSIT, BSCS">
+                            <small style="font-size:11px;color:#888;">Which program do you coordinate?</small>
                         </div>
                     </div>
 
