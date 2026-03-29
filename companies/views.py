@@ -25,6 +25,7 @@ from django.views.generic import TemplateView, CreateView, UpdateView, DeleteVie
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
+from django.http import JsonResponse
 
 from accounts.mixins import TeacherRequiredMixin
 from .models import Company, Assignment
@@ -588,3 +589,22 @@ class StudentResetPasswordView(TeacherRequiredMixin, DetailView):
             f"Password for '{student.get_full_name()}' has been reset to 'student123'."
         )
         return redirect('teacher:students')
+
+
+def get_supervisor_details(request, supervisor_id):
+    """
+    API endpoint to get supervisor details for autocomplete.
+    Returns JSON with supervisor's company name and contact info.
+    """
+    try:
+        supervisor = User.objects.get(id=supervisor_id, role='supervisor')
+        data = {
+            'id': supervisor.id,
+            'name': supervisor.get_full_name(),
+            'email': supervisor.email,
+            'phone': supervisor.phone or '',
+            'company': supervisor.company or '',
+        }
+        return JsonResponse(data)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Supervisor not found'}, status=404)

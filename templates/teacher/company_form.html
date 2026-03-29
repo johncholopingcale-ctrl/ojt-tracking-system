@@ -40,7 +40,9 @@
                             Supervisor
                         </label>
                         {{ form.supervisor }}
-                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Select the supervisor who will manage interns at this company.</small>
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">
+                            Select supervisor to auto-fill company name and contact info
+                        </small>
                         {% if form.supervisor.errors %}
                         <small class="text-danger">{{ form.supervisor.errors.0 }}</small>
                         {% endif %}
@@ -113,4 +115,66 @@
 }
 </style>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+// Autocomplete supervisor details when selected
+document.addEventListener('DOMContentLoaded', function() {
+    const supervisorSelect = document.getElementById('id_supervisor');
+    const companyName = document.getElementById('id_name');
+    const contactEmail = document.getElementById('id_contact_email');
+    const contactPhone = document.getElementById('id_contact_phone');
+    
+    supervisorSelect.addEventListener('change', function() {
+        const supervisorId = this.value;
+        
+        if (!supervisorId) {
+            return; // No supervisor selected
+        }
+        
+        // Fetch supervisor details via AJAX
+        fetch(`/teacher/api/supervisor/${supervisorId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Supervisor not found');
+                    return;
+                }
+                
+                // Auto-fill company name if registered with one
+                if (data.company && !companyName.value) {
+                    companyName.value = data.company;
+                    // Flash the field to show it was auto-filled
+                    companyName.style.background = 'rgba(245,197,24,0.1)';
+                    setTimeout(() => {
+                        companyName.style.background = '';
+                    }, 1000);
+                }
+                
+                // Auto-fill contact email if available
+                if (data.email && !contactEmail.value) {
+                    contactEmail.value = data.email;
+                    contactEmail.style.background = 'rgba(245,197,24,0.1)';
+                    setTimeout(() => {
+                        contactEmail.style.background = '';
+                    }, 1000);
+                }
+                
+                // Auto-fill contact phone if available
+                if (data.phone && !contactPhone.value) {
+                    contactPhone.value = data.phone;
+                    contactPhone.style.background = 'rgba(245,197,24,0.1)';
+                    setTimeout(() => {
+                        contactPhone.style.background = '';
+                    }, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching supervisor details:', error);
+            });
+    });
+});
+</script>
+{% endblock %}
+
 {% endblock %}

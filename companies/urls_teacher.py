@@ -23,6 +23,7 @@ urlpatterns = [
     path('company/add/', views.CompanyCreateView.as_view(), name='company_add'),
     path('company/<int:pk>/edit/', views.CompanyUpdateView.as_view(), name='company_edit'),
     path('company/<int:pk>/delete/', views.CompanyDeleteView.as_view(), name='company_delete'),
+    path('api/supervisor/<int:supervisor_id>/', views.get_supervisor_details, name='supervisor_details'),
 
     # Student Management
     path('students/', views.StudentListView.as_view(), name='students'),
