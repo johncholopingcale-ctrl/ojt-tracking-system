@@ -443,3 +443,107 @@ class StudentEvaluationListView(StudentRequiredMixin, ListView):
         return Evaluation.objects.filter(
             student=self.request.user
         ).order_by('-created_at')
+
+
+class DTRResubmitView(StudentRequiredMixin, TemplateView):
+    """
+    View for students to resubmit a rejected DTR.
+    Archives the rejected DTR to history and allows a new submission.
+    
+    CRUD Operation: CREATE - Creating new DTR from rejected one
+    """
+    
+    template_name = 'student/dtr_resubmit.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        dtr_id = self.kwargs.get('pk')
+        dtr = get_object_or_404(DTRLog, pk=dtr_id, student=self.request.user)
+        
+        # Only allow resubmission of rejected DTRs
+        if dtr.confirmation_status != 'rejected':
+            messages.error(self.request, "Only rejected DTRs can be resubmitted.")
+            return redirect('student:dtr_list')
+        
+        context['rejected_dtr'] = dtr
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle resubmission of rejected DTR."""
+        from .models import DTRHistory
+        from datetime import datetime
+        
+        dtr_id = self.kwargs.get('pk')
+        rejected_dtr = get_object_or_404(DTRLog, pk=dtr_id, student=request.user)
+        
+        # Verify it's rejected
+        if rejected_dtr.confirmation_status != 'rejected':
+            messages.error(request, "Only rejected DTRs can be resubmitted.")
+            return redirect('student:dtr_list')
+        
+        try:
+            # Archive the rejected DTR to history
+            DTRHistory.archive_dtr(rejected_dtr, reason='resubmission')
+            
+            # Get form data from POST
+            time_in_str = request.POST.get('time_in')
+            time_out_str = request.POST.get('time_out')
+            notes = request.POST.get('notes', '')
+            selfie_data = request.POST.get('selfie_data')
+            logout_selfie_data = request.POST.get('logout_selfie_data')
+            
+            # Parse time strings
+            from datetime import time
+            time_in = datetime.strptime(time_in_str, '%H:%M').time() if time_in_str else rejected_dtr.time_in
+            time_out = datetime.strptime(time_out_str, '%H:%M').time() if time_out_str else rejected_dtr.time_out
+            
+            # Process selfie uploads
+            selfie = rejected_dtr.selfie
+            logout_selfie = rejected_dtr.logout_selfie
+            
+            if selfie_data and selfie_data.startswith('data:image'):
+                selfie = FileHandler.save_base64_image(selfie_data, 'selfie')
+            
+            if logout_selfie_data and logout_selfie_data.startswith('data:image'):
+                logout_selfie = FileHandler.save_base64_image(logout_selfie_data, 'logout_selfie')
+            
+            # Create new DTR entry with pending status
+            new_dtr = DTRLog.objects.create(
+                student=request.user,
+                date=rejected_dtr.date,
+                time_in=time_in,
+                time_out=time_out,
+                selfie=selfie,
+                logout_selfie=logout_selfie,
+                notes=notes,
+                confirmation_status='pending'
+            )
+            
+            # Delete the old rejected DTR
+            rejected_dtr.delete()
+            
+            messages.success(request, f"DTR for {rejected_dtr.date} has been resubmitted successfully!")
+            return redirect('student:dtr_list')
+            
+        except Exception as e:
+            messages.error(request, f"Error resubmitting DTR: {str(e)}")
+            return redirect('student:dtr_list')
+
+
+class DTRHistoryView(StudentRequiredMixin, ListView):
+    """
+    View for students to see their DTR history (archived/rejected DTRs).
+    
+    CRUD Operation: READ - Reading archived DTR records
+    """
+    
+    template_name = 'student/dtr_history.html'
+    context_object_name = 'history_logs'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        """Get DTR history for current student."""
+        from .models import DTRHistory
+        return DTRHistory.objects.filter(
+            student=self.request.user
+        ).order_by('-date', '-archived_at')

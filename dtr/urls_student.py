@@ -23,6 +23,8 @@ urlpatterns = [
     # path('dtr/log/', views.DTRLogCreateView.as_view(), name='dtr_log'),  # DEPRECATED: Use log-in and log-out separately
     path('dtr/<int:pk>/edit/', views.DTREditView.as_view(), name='dtr_edit'),
     path('dtr/<int:pk>/delete/', views.DTRDeleteView.as_view(), name='dtr_delete'),
+    path('dtr/<int:pk>/resubmit/', views.DTRResubmitView.as_view(), name='dtr_resubmit'),
+    path('dtr/history/', views.DTRHistoryView.as_view(), name='dtr_history'),
 
     # Journal Management
     path('journals/', views.StudentJournalListView.as_view(), name='journal_list'),
