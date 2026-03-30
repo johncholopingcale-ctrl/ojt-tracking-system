@@ -327,13 +327,27 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
         return super().post(request, *args, **kwargs)
     
     def form_valid(self, form):
-        """Handle log-out with success message."""
+        """Handle log-out with selfie processing and success message."""
         try:
+            # Process logout selfie from base64 data
+            selfie_data = form.cleaned_data.get('selfie_data') or self.request.POST.get('selfie_data')
+            
+            if selfie_data and selfie_data.startswith('data:image'):
+                # Use FileHandler to convert base64 to file
+                logout_selfie_file = FileHandler.save_base64_image(selfie_data, 'logout_selfie')
+                form.instance.logout_selfie = logout_selfie_file
+            elif not form.instance.logout_selfie:
+                messages.error(self.request, "Please capture a selfie before logging out.")
+                return self.form_invalid(form)
+            
             response = super().form_valid(form)
             messages.success(self.request, f"Logged out successfully! Total hours: {self.object.get_hours_rendered()}")
             return response
         except OJTValidationError as e:
             messages.error(self.request, str(e))
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"Error processing selfie: {str(e)}")
             return self.form_invalid(form)
 
 

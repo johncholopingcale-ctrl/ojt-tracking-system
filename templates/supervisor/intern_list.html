@@ -16,9 +16,8 @@
         <table class="table table-custom">
             <thead>
                 <tr>
-                    <th>Student</th>
-                    <th>Company</th>
-                    <th>Duration</th>
+                    <th>Student Name</th>
+                    <th>Latest Login Date</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -40,19 +39,27 @@
                         </div>
                     </td>
                     <td>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <div class="stat-icon green" style="width:28px;height:28px;font-size:11px;">
-                                <i class="bi bi-building"></i>
-                            </div>
-                            <span style="font-size:13px;">{{ assignment.company.name }}</span>
+                        {% if assignment.latest_login_date %}
+                        <div style="font-weight:600;color:var(--green-main);">
+                            <i class="bi bi-calendar-check me-1"></i>{{ assignment.latest_login_date|date:"M d, Y" }}
                         </div>
-                    </td>
-                    <td style="font-size:12px;">
-                        <div><i class="bi bi-calendar-event me-1 text-success"></i>{{ assignment.start_date|date:"M d, Y" }}</div>
-                        <div><i class="bi bi-calendar-check me-1 text-danger"></i>{{ assignment.end_date|date:"M d, Y" }}</div>
+                        <small style="font-size:11px;color:#888;">{{ assignment.latest_login_date|date:"l" }}</small>
+                        {% else %}
+                        <span class="status-badge" style="background:#f8f9fa;color:#888;">
+                            <i class="bi bi-dash-circle"></i> No login yet
+                        </span>
+                        {% endif %}
                     </td>
                     <td>
-                        <span class="status-badge status-active">Active</span>
+                        {% if assignment.login_status == 'Logged In' %}
+                        <span class="status-badge" style="background:#d4edda;color:#155724;">
+                            <i class="bi bi-check-circle-fill"></i> Logged In
+                        </span>
+                        {% else %}
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;">
+                            <i class="bi bi-clock"></i> Logged Out
+                        </span>
+                        {% endif %}
                     </td>
                     <td>
                         <div style="display:flex;gap:8px;">

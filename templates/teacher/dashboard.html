@@ -128,6 +128,9 @@
                                     <a href="{% url 'teacher:student_dtr' item.student.pk %}" class="icon-btn view" title="View DTR">
                                         <i class="bi bi-clock-history"></i>
                                     </a>
+                                    <a href="{% url 'teacher:evaluations' %}?student={{ item.student.pk }}" class="icon-btn" style="background:var(--gold-light);color:var(--gold-dark);" title="View Evaluations">
+                                        <i class="bi bi-star-fill"></i>
+                                    </a>
                                     {% if item.assignment %}
                                     <a href="{% url 'teacher:edit_assignment' item.assignment.pk %}" class="icon-btn edit" title="Edit Assignment">
                                         <i class="bi bi-pencil-fill"></i>

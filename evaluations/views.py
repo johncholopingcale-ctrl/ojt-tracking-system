@@ -96,10 +96,24 @@ class InternListView(SupervisorRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        """Get assignments for supervisor's companies."""
+        """Get assignments for supervisor's companies with latest DTR info."""
+        from dtr.models import DTRLog
+        from django.db.models import Max, Q
+        
         supervisor = self.request.user
         companies = Company.objects.filter(supervisor=supervisor)
-        return Assignment.objects.filter(company__in=companies).order_by('-start_date')
+        assignments = Assignment.objects.filter(company__in=companies).order_by('-start_date')
+        
+        # Annotate each assignment with latest DTR date
+        for assignment in assignments:
+            latest_dtr = DTRLog.objects.filter(
+                student=assignment.student
+            ).order_by('-date').first()
+            
+            assignment.latest_login_date = latest_dtr.date if latest_dtr else None
+            assignment.login_status = 'Logged In' if (latest_dtr and not latest_dtr.time_out) else 'Logged Out'
+        
+        return assignments
 
 
 class InternDTRView(SupervisorRequiredMixin, ListView):

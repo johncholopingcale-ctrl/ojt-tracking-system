@@ -81,6 +81,13 @@ class DTRLog(models.Model):
         help_text="Selfie taken at clock-in for verification"
     )
 
+    logout_selfie = models.ImageField(
+        upload_to='selfies/%Y/%m/',
+        null=True,
+        blank=True,
+        help_text="Selfie taken at clock-out for verification"
+    )
+
     hours_rendered = models.FloatField(
         default=0,
         help_text="Hours worked (auto-calculated from time_in and time_out)"

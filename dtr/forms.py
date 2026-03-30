@@ -58,12 +58,18 @@ class DTRLogInForm(forms.ModelForm):
 
 class DTRLogOutForm(forms.ModelForm):
     """
-    Form for logging out (time_out only).
+    Form for logging out (time_out only) with selfie capture.
     
     OOP Concept: SPECIALIZED FORM
     ----------------------------
     This form handles only log-out, updating existing DTR entry.
     """
+
+    # Hidden field for base64 selfie data from webcam
+    selfie_data = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False
+    )
 
     class Meta:
         model = DTRLog

@@ -6,7 +6,15 @@
 {% block teacher_content %}
 <!-- Header -->
 <div class="section-header fade-up">
-    <div class="section-title"><i class="bi bi-star-fill me-2"></i>Supervisor Evaluations</div>
+    <div class="section-title">
+        <i class="bi bi-star-fill me-2"></i>Supervisor Evaluations
+        {% if filtered_student %}
+        <small style="color:var(--gold);font-weight:600;"> - {{ filtered_student.get_full_name }}</small>
+        {% endif %}
+    </div>
+    {% if filtered_student %}
+    <a href="{% url 'teacher:evaluations' %}" class="btn-gold"><i class="bi bi-x-lg"></i> Clear Filter</a>
+    {% endif %}
 </div>
 
 <!-- Evaluations Table -->

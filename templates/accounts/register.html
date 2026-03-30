@@ -242,6 +242,17 @@
                 </div>
 
                 <div class="mt-3">
+                    <label for="id_phone" class="form-label">
+                        <i class="bi bi-phone me-1"></i>Phone Number
+                    </label>
+                    <input type="text" name="phone" id="id_phone" class="form-control" placeholder="09XXXXXXXXX" value="{{ form.phone.value|default:'' }}" maxlength="11">
+                    <div class="form-text">Filipino mobile number format (Optional)</div>
+                    {% if form.phone.errors %}
+                        <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.phone.errors.0 }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
                     <label for="id_role" class="form-label">
                         <i class="bi bi-person-badge me-1"></i>Role
                     </label>

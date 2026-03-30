@@ -359,8 +359,28 @@ class EvaluationListView(TeacherRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        """Get all evaluations ordered by date."""
-        return Evaluation.objects.all().order_by('-created_at')
+        """Get all evaluations ordered by date, optionally filtered by student."""
+        queryset = Evaluation.objects.all().order_by('-created_at')
+        
+        # Filter by student if provided in query params
+        student_id = self.request.GET.get('student')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        """Add filtered student info to context."""
+        context = super().get_context_data(**kwargs)
+        student_id = self.request.GET.get('student')
+        if student_id:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                context['filtered_student'] = User.objects.get(pk=student_id)
+            except User.DoesNotExist:
+                pass
+        return context
 
 
 # ==================== COMPANY MANAGEMENT VIEWS ====================
