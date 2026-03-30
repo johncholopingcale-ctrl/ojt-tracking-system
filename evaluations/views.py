@@ -318,6 +318,7 @@ class DTRConfirmationView(SupervisorRequiredMixin, TemplateView):
             self.dtr_log.confirmed_by = request.user
             self.dtr_log.confirmed_at = timezone.now()
             self.dtr_log.confirmation_remarks = remarks
+            self.dtr_log.is_valid = True  # Mark as valid when confirmed
             self.dtr_log.save()
             messages.success(request, f"DTR log for {self.dtr_log.date} has been confirmed.")
 
@@ -330,8 +331,9 @@ class DTRConfirmationView(SupervisorRequiredMixin, TemplateView):
             self.dtr_log.confirmed_by = request.user
             self.dtr_log.confirmed_at = timezone.now()
             self.dtr_log.confirmation_remarks = remarks
+            self.dtr_log.is_valid = False  # Mark as invalid when rejected - time_in flagged as not logged in
             self.dtr_log.save()
-            messages.warning(request, f"DTR log for {self.dtr_log.date} has been rejected.")
+            messages.warning(request, f"DTR log for {self.dtr_log.date} has been rejected. Student can resubmit.")
 
         return redirect('supervisor:intern_dtr', student_id=self.dtr_log.student.pk)
 

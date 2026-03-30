@@ -39,6 +39,7 @@ urlpatterns = [
 
     # Student DTR Viewing
     path('student/<int:student_id>/dtr/', views.StudentDTRView.as_view(), name='student_dtr'),
+    path('dtr/rejected/', views.RejectedDTRListView.as_view(), name='rejected_dtr_list'),
 
     # Journal Management
     path('journals/', views.JournalListView.as_view(), name='journals'),

@@ -261,6 +261,43 @@ class StudentDTRView(TeacherRequiredMixin, ListView):
         return context
 
 
+class RejectedDTRListView(TeacherRequiredMixin, ListView):
+    """
+    View for teachers to see all rejected DTR logs from all students.
+    
+    OOP Concept: FILTERED LISTVIEW
+    -----------------------------
+    Shows only rejected DTRs with supervisor remarks.
+    
+    CRUD Operation: READ - Reading rejected DTR records
+    """
+    
+    model = DTRLog
+    template_name = 'teacher/rejected_dtr_list.html'
+    context_object_name = 'rejected_dtrs'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        """Get all rejected DTR logs, ordered by most recent."""
+        return DTRLog.objects.filter(
+            confirmation_status='rejected'
+        ).select_related('student', 'confirmed_by').order_by('-date', '-confirmed_at')
+    
+    def get_context_data(self, **kwargs):
+        """Add statistics to context."""
+        context = super().get_context_data(**kwargs)
+        
+        # Count rejected DTRs per student
+        rejected_counts = DTRLog.objects.filter(
+            confirmation_status='rejected'
+        ).values('student').annotate(count=Count('id'))
+        
+        context['total_rejected'] = self.get_queryset().count()
+        context['students_with_rejections'] = rejected_counts.count()
+        
+        return context
+
+
 class JournalListView(TeacherRequiredMixin, ListView):
     """
     View for teachers to see all student journals.
