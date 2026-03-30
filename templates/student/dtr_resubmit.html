@@ -1,0 +1,207 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}Resubmit DTR{% endblock %}
+{% block page_subtitle %}Resubmit rejected DTR log{% endblock %}
+
+{% block student_content %}
+<div class="card-wrap fade-up">
+    <div class="card-header-custom">
+        <i class="bi bi-arrow-clockwise me-2"></i>Resubmit DTR for {{ rejected_dtr.date|date:"F d, Y" }}
+    </div>
+    <div class="card-body-custom" style="padding:24px;">
+        <!-- Rejection Info -->
+        <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:8px;padding:16px;margin-bottom:24px;">
+            <div style="font-size:14px;font-weight:600;color:#856404;margin-bottom:8px;">
+                <i class="bi bi-exclamation-triangle me-2"></i>Previous Submission was Rejected
+            </div>
+            {% if rejected_dtr.confirmation_remarks %}
+            <div style="font-size:13px;color:#856404;margin-bottom:6px;">
+                <strong>Reason:</strong> {{ rejected_dtr.confirmation_remarks }}
+            </div>
+            {% endif %}
+            <div style="font-size:12px;color:#888;">
+                Rejected by {{ rejected_dtr.confirmed_by.get_full_name }} on {{ rejected_dtr.confirmed_at|date:"M d, Y g:i A" }}
+            </div>
+        </div>
+
+        <!-- Resubmission Form -->
+        <form method="post" id="resubmitForm">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Time In <span class="text-danger">*</span></label>
+                    <input type="time" name="time_in" class="form-control" 
+                           value="{{ rejected_dtr.time_in|time:'H:i' }}" required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Time Out <span class="text-danger">*</span></label>
+                    <input type="time" name="time_out" class="form-control" 
+                           value="{% if rejected_dtr.time_out %}{{ rejected_dtr.time_out|time:'H:i' }}{% endif %}" 
+                           {% if rejected_dtr.time_out %}required{% endif %}>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="4" 
+                          placeholder="Add any notes about your work activities...">{{ rejected_dtr.notes }}</textarea>
+            </div>
+
+            <!-- Selfie Section -->
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Login Photo</label>
+                    <div style="background:#f8f9fa;border-radius:12px;padding:16px;text-align:center;">
+                        {% if rejected_dtr.selfie %}
+                        <img src="{{ rejected_dtr.selfie.url }}" alt="Current Login Photo" 
+                             style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;">
+                        <p style="font-size:12px;color:#888;">Current login photo</p>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="captureLoginSelfie()">
+                            <i class="bi bi-camera me-1"></i>Capture New Photo
+                        </button>
+                        <input type="hidden" name="selfie_data" id="selfieData">
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Logout Photo</label>
+                    <div style="background:#f8f9fa;border-radius:12px;padding:16px;text-align:center;">
+                        {% if rejected_dtr.logout_selfie %}
+                        <img src="{{ rejected_dtr.logout_selfie.url }}" alt="Current Logout Photo" 
+                             style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;">
+                        <p style="font-size:12px;color:#888;">Current logout photo</p>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="captureLogoutSelfie()">
+                            <i class="bi bi-camera me-1"></i>Capture New Photo
+                        </button>
+                        <input type="hidden" name="logout_selfie_data" id="logoutSelfieData">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:24px;padding-top:20px;border-top:1px solid #eee;display:flex;gap:12px;justify-content:flex-end;">
+                <a href="{% url 'student:dtr_list' %}" class="btn btn-secondary" style="border-radius:10px;">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-success" style="border-radius:10px;">
+                    <i class="bi bi-check-circle me-1"></i>Resubmit DTR
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Webcam Modal for Login Selfie -->
+<div class="modal fade" id="loginSelfieModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+            <div class="modal-header" style="background:var(--green-main);color:#fff;border:none;">
+                <h6 class="modal-title"><i class="bi bi-camera me-2"></i>Capture Login Photo</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" style="padding:24px;">
+                <video id="loginWebcam" autoplay playsinline style="width:100%;max-width:400px;border-radius:12px;"></video>
+                <canvas id="loginCanvas" style="display:none;"></canvas>
+                <button type="button" class="btn btn-primary mt-3" onclick="takeLoginPhoto()" style="border-radius:10px;">
+                    <i class="bi bi-camera-fill me-1"></i>Take Photo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Webcam Modal for Logout Selfie -->
+<div class="modal fade" id="logoutSelfieModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+            <div class="modal-header" style="background:var(--gold);color:#fff;border:none;">
+                <h6 class="modal-title"><i class="bi bi-camera me-2"></i>Capture Logout Photo</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" style="padding:24px;">
+                <video id="logoutWebcam" autoplay playsinline style="width:100%;max-width:400px;border-radius:12px;"></video>
+                <canvas id="logoutCanvas" style="display:none;"></canvas>
+                <button type="button" class="btn btn-warning mt-3" onclick="takeLogoutPhoto()" style="border-radius:10px;">
+                    <i class="bi bi-camera-fill me-1"></i>Take Photo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let loginStream = null;
+let logoutStream = null;
+
+function captureLoginSelfie() {
+    const modal = new bootstrap.Modal(document.getElementById('loginSelfieModal'));
+    modal.show();
+    
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            loginStream = stream;
+            document.getElementById('loginWebcam').srcObject = stream;
+        })
+        .catch(err => {
+            alert('Could not access camera: ' + err.message);
+        });
+}
+
+function takeLoginPhoto() {
+    const video = document.getElementById('loginWebcam');
+    const canvas = document.getElementById('loginCanvas');
+    const context = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+    
+    const imageData = canvas.toDataURL('image/jpeg');
+    document.getElementById('selfieData').value = imageData;
+    
+    if (loginStream) {
+        loginStream.getTracks().forEach(track => track.stop());
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('loginSelfieModal')).hide();
+    alert('Login photo captured successfully!');
+}
+
+function captureLogoutSelfie() {
+    const modal = new bootstrap.Modal(document.getElementById('logoutSelfieModal'));
+    modal.show();
+    
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            logoutStream = stream;
+            document.getElementById('logoutWebcam').srcObject = stream;
+        })
+        .catch(err => {
+            alert('Could not access camera: ' + err.message);
+        });
+}
+
+function takeLogoutPhoto() {
+    const video = document.getElementById('logoutWebcam');
+    const canvas = document.getElementById('logoutCanvas');
+    const context = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+    
+    const imageData = canvas.toDataURL('image/jpeg');
+    document.getElementById('logoutSelfieData').value = imageData;
+    
+    if (logoutStream) {
+        logoutStream.getTracks().forEach(track => track.stop());
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('logoutSelfieModal')).hide();
+    alert('Logout photo captured successfully!');
+}
+</script>
+{% endblock %}

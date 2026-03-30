@@ -1,0 +1,248 @@
+{% extends 'student/base_student.html' %}
+
+{% block page_title %}DTR History{% endblock %}
+{% block page_subtitle %}Archived and rejected DTR logs{% endblock %}
+
+{% block student_content %}
+<div class="section-header fade-up">
+    <div class="section-title"><i class="bi bi-archive me-2"></i>DTR History</div>
+    <a href="{% url 'student:dtr_list' %}" class="btn-green">
+        <i class="bi bi-arrow-left me-1"></i>Back to Current DTRs
+    </a>
+</div>
+
+<div class="card-wrap fade-up delay-1">
+    <div class="card-header-custom">
+        <i class="bi bi-clock-history me-2"></i>Archived DTR Logs
+    </div>
+    {% if history_logs %}
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                    <th>Archived</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in history_logs %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ log.date|date:"M d, Y" }}</div>
+                        <div style="font-size:11px;color:#aaa;">{{ log.date|date:"l" }}</div>
+                    </td>
+                    <td>
+                        <div style="font-size:13px;">
+                            <i class="bi bi-box-arrow-in-right me-1 text-success"></i>{{ log.time_in|time:"g:i A" }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if log.time_out %}
+                        <div style="font-size:13px;">
+                            <i class="bi bi-box-arrow-right me-1 text-danger"></i>{{ log.time_out|time:"g:i A" }}
+                        </div>
+                        {% else %}
+                        <span class="status-badge status-pending">Not logged out</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-weight:600;color:#888;">{{ log.hours_rendered|floatformat:1 }} hrs</span>
+                    </td>
+                    <td>
+                        {% if log.confirmation_status == 'rejected' %}
+                        <span class="status-badge" style="background:#f8d7da;color:#721c24;">
+                            <i class="bi bi-x-circle"></i> Rejected
+                        </span>
+                        {% elif log.confirmation_status == 'confirmed' %}
+                        <span class="status-badge" style="background:#d4edda;color:#155724;">
+                            <i class="bi bi-check-circle"></i> Confirmed
+                        </span>
+                        {% else %}
+                        <span class="status-badge" style="background:#e2e3e5;color:#383d41;">
+                            {{ log.confirmation_status|title }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="font-size:12px;color:#888;">
+                            {{ log.archived_at|date:"M d, Y" }}
+                        </div>
+                        <div style="font-size:10px;color:#aaa;">
+                            {{ log.archived_reason|title }}
+                        </div>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                data-bs-toggle="modal" data-bs-target="#historyModal{{ log.pk }}"
+                                style="border-radius:8px;font-size:11px;padding:4px 10px;">
+                            <i class="bi bi-eye me-1"></i>View Details
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:12px 18px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;">
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" style="border-radius:8px 0 0 8px;">« Prev</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link" style="background:var(--green-main);color:#fff;border-color:var(--green-main);">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" style="border-radius:0 8px 8px 0;">Next »</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-archive" style="font-size:48px;color:#ddd;"></i>
+        <p class="mt-3" style="color:#888;">No archived DTR logs yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- History Detail Modals -->
+{% for log in history_logs %}
+<div class="modal fade" id="historyModal{{ log.pk }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+            <div class="modal-header" style="background:#6c757d;color:#fff;border:none;">
+                <h6 class="modal-title"><i class="bi bi-archive me-2"></i>Archived DTR - {{ log.date|date:"F d, Y" }}</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+                <div class="row">
+                    <!-- Left Column: Selfies -->
+                    <div class="col-md-5 mb-3 mb-md-0">
+                        <div class="text-center mb-3">
+                            <p style="font-size:12px;color:#888;margin-bottom:6px;"><i class="bi bi-camera me-1"></i>Login Photo</p>
+                            {% if log.selfie %}
+                            <img src="{{ log.selfie.url }}" alt="Login Selfie" style="width:100%;max-width:220px;border-radius:12px;border:3px solid #888;">
+                            {% else %}
+                            <div style="background:#f5f5f5;border-radius:12px;padding:30px;color:#aaa;">
+                                <i class="bi bi-person-bounding-box" style="font-size:36px;"></i>
+                                <p class="mt-2 mb-0" style="font-size:12px;">No photo</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-center">
+                            <p style="font-size:12px;color:#888;margin-bottom:6px;"><i class="bi bi-camera me-1"></i>Logout Photo</p>
+                            {% if log.logout_selfie %}
+                            <img src="{{ log.logout_selfie.url }}" alt="Logout Selfie" style="width:100%;max-width:220px;border-radius:12px;border:3px solid #888;">
+                            {% else %}
+                            <div style="background:#f5f5f5;border-radius:12px;padding:30px;color:#aaa;">
+                                <i class="bi bi-person-bounding-box" style="font-size:36px;"></i>
+                                <p class="mt-2 mb-0" style="font-size:12px;">No photo</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Right Column: Details -->
+                    <div class="col-md-7">
+                        <table class="table table-borderless" style="font-size:14px;">
+                            <tr>
+                                <td style="width:40%;color:#888;"><i class="bi bi-calendar3 me-2"></i>Date</td>
+                                <td style="font-weight:600;">{{ log.date|date:"l, F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-box-arrow-in-right me-2"></i>Time In</td>
+                                <td style="font-weight:600;">{{ log.time_in|time:"g:i A" }}</td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-box-arrow-right me-2"></i>Time Out</td>
+                                <td style="font-weight:600;">
+                                    {% if log.time_out %}
+                                    {{ log.time_out|time:"g:i A" }}
+                                    {% else %}
+                                    <span class="status-badge status-pending">Not logged out</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-clock-history me-2"></i>Hours Rendered</td>
+                                <td style="font-weight:600;">{{ log.hours_rendered|floatformat:2 }} hours</td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-clipboard-check me-2"></i>Status</td>
+                                <td>
+                                    {% if log.confirmation_status == 'rejected' %}
+                                    <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:13px;">
+                                        <i class="bi bi-x-circle"></i> Rejected
+                                    </span>
+                                    {% elif log.confirmation_status == 'confirmed' %}
+                                    <span class="status-badge" style="background:#d4edda;color:#155724;font-size:13px;">
+                                        <i class="bi bi-check-circle"></i> Confirmed
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge" style="background:#e2e3e5;color:#383d41;font-size:13px;">
+                                        {{ log.confirmation_status|title }}
+                                    </span>
+                                    {% endif %}
+                                    {% if log.confirmed_by %}
+                                    <div style="font-size:11px;color:#888;margin-top:4px;">
+                                        By: {{ log.confirmed_by.get_full_name }}<br>
+                                        On: {{ log.confirmed_at|date:"M d, Y g:i A" }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-archive me-2"></i>Archived</td>
+                                <td>
+                                    <div style="font-size:13px;">{{ log.archived_at|date:"M d, Y g:i A" }}</div>
+                                    <div style="font-size:11px;color:#888;">Reason: {{ log.archived_reason|title }}</div>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        {% if log.confirmation_remarks %}
+                        <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:8px;padding:14px;margin-top:12px;">
+                            <div style="font-size:12px;font-weight:600;color:#856404;margin-bottom:6px;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Supervisor Remarks
+                            </div>
+                            <div style="font-size:13px;color:#856404;">{{ log.confirmation_remarks }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if log.notes %}
+                        <div style="background:#f8f9fa;border-radius:10px;padding:14px;margin-top:12px;">
+                            <div style="font-size:12px;color:#888;margin-bottom:6px;"><i class="bi bi-chat-left-text me-1"></i>Notes</div>
+                            <div style="font-size:13px;color:#333;">{{ log.notes }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#aaa;">
+                            <i class="bi bi-clock me-1"></i>Original Created: {{ log.original_created_at|date:"M d, Y g:i A" }}
+                            <br>
+                            <i class="bi bi-pencil me-1"></i>Original Updated: {{ log.original_updated_at|date:"M d, Y g:i A" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border:none;padding:12px 24px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
