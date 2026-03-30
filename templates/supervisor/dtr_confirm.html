@@ -1,13 +1,30 @@
 {% extends 'supervisor/base_supervisor.html' %}
 
-{% block page_title %}Confirm DTR{% endblock %}
+{% block page_title %}{% if dtr_log.is_resubmission %}Verify Resubmitted DTR{% else %}Confirm DTR{% endif %}{% endblock %}
 {% block page_subtitle %}Review and confirm {{ student.get_full_name }}'s time log{% endblock %}
 
 {% block supervisor_content %}
+{% if dtr_log.is_resubmission %}
+<!-- Resubmission Alert -->
+<div class="alert alert-warning fade-up mb-4" style="border-radius:12px;border-left:4px solid #ffc107;">
+    <div style="display:flex;align-items:start;gap:12px;">
+        <i class="bi bi-arrow-clockwise" style="font-size:24px;"></i>
+        <div>
+            <div style="font-weight:600;font-size:15px;">This is a RESUBMITTED DTR</div>
+            <div style="font-size:13px;margin-top:4px;">
+                This DTR was previously rejected and has been resubmitted by the student with corrections.
+                Please verify the new photos and details carefully before approving.
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- DTR Details Card -->
 <div class="card-wrap fade-up mb-4">
-    <div class="card-header-custom">
-        <i class="bi bi-clock-history me-2"></i>DTR Log Details
+    <div class="card-header-custom" {% if dtr_log.is_resubmission %}style="background:#fff3cd;color:#856404;"{% endif %}>
+        <i class="bi bi-{% if dtr_log.is_resubmission %}arrow-clockwise{% else %}clock-history{% endif %} me-2"></i>
+        {% if dtr_log.is_resubmission %}Resubmitted DTR Details{% else %}DTR Log Details{% endif %}
     </div>
     <div class="card-body-custom" style="padding:20px;">
         <div class="row">
@@ -56,7 +73,9 @@
                 {% endif %}
             </div>
             <div class="col-md-6 text-center">
-                <label style="font-size:12px;color:#888;display:block;margin-bottom:10px;">Verification Photos</label>
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:10px;">
+                    Verification Photos {% if dtr_log.is_resubmission %}<span class="text-warning">(NEW)</span>{% endif %}
+                </label>
                 
                 <!-- Login Photo -->
                 <div style="margin-bottom:16px;">

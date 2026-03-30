@@ -507,7 +507,7 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
             if logout_selfie_data and logout_selfie_data.startswith('data:image'):
                 logout_selfie = FileHandler.save_base64_image(logout_selfie_data, 'logout_selfie')
             
-            # Create new DTR entry with pending status
+            # Create new DTR entry with pending status (marked as resubmission)
             new_dtr = DTRLog.objects.create(
                 student=request.user,
                 date=rejected_dtr.date,
@@ -516,13 +516,14 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
                 selfie=selfie,
                 logout_selfie=logout_selfie,
                 notes=notes,
-                confirmation_status='pending'
+                confirmation_status='pending',
+                is_resubmission=True  # Mark as resubmission for supervisor review
             )
             
             # Delete the old rejected DTR
             rejected_dtr.delete()
             
-            messages.success(request, f"DTR for {rejected_dtr.date} has been resubmitted successfully!")
+            messages.success(request, f"DTR for {rejected_dtr.date} has been resubmitted successfully! It is now pending supervisor verification.")
             return redirect('student:dtr_list')
             
         except Exception as e:

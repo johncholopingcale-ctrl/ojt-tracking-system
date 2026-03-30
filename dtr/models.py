@@ -138,6 +138,11 @@ class DTRLog(models.Model):
         help_text="Whether this time-in is valid. Set to False when DTR is rejected."
     )
 
+    is_resubmission = models.BooleanField(
+        default=False,
+        help_text="Whether this is a resubmitted DTR after rejection."
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
