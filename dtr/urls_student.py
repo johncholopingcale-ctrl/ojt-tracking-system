@@ -20,7 +20,7 @@ urlpatterns = [
     path('dtr/', views.DTRListView.as_view(), name='dtr_list'),
     path('dtr/log-in/', views.DTRLogInView.as_view(), name='dtr_log_in'),
     path('dtr/log-out/', views.DTRLogOutView.as_view(), name='dtr_log_out'),
-    path('dtr/log/', views.DTRLogCreateView.as_view(), name='dtr_log'),  # Keep for backwards compatibility
+    # path('dtr/log/', views.DTRLogCreateView.as_view(), name='dtr_log'),  # DEPRECATED: Use log-in and log-out separately
     path('dtr/<int:pk>/edit/', views.DTREditView.as_view(), name='dtr_edit'),
     path('dtr/<int:pk>/delete/', views.DTRDeleteView.as_view(), name='dtr_delete'),
 

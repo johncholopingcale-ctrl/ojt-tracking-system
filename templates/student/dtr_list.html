@@ -144,8 +144,11 @@
     {% else %}
     <div class="text-center py-5">
         <i class="bi bi-clock" style="font-size:48px;color:#ddd;"></i>
-        <p class="mt-3" style="color:#888;">No DTR logs yet. Start by logging your first DTR!</p>
-        <a href="{% url 'student:dtr_log' %}" class="btn-green mt-2"><i class="bi bi-plus-lg"></i> Log DTR</a>
+        <p class="mt-3" style="color:#888;">No DTR logs yet. Start by logging in!</p>
+        <div class="d-flex gap-2 justify-content-center mt-3">
+            <a href="{% url 'student:dtr_log_in' %}" class="btn-green"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
+            <a href="{% url 'student:dtr_log_out' %}" class="btn-gold"><i class="bi bi-box-arrow-right"></i> Log Out</a>
+        </div>
     </div>
     {% endif %}
 </div>
