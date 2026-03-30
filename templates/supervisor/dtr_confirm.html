@@ -56,15 +56,46 @@
                 {% endif %}
             </div>
             <div class="col-md-6 text-center">
-                <label style="font-size:12px;color:#888;display:block;margin-bottom:10px;">Verification Selfie</label>
-                {% if dtr_log.selfie %}
-                <img src="{{ dtr_log.selfie.url }}" alt="Selfie" style="max-width:100%;max-height:300px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-                {% else %}
-                <div style="padding:40px;background:#f8f9fa;border-radius:12px;">
-                    <i class="bi bi-camera-fill" style="font-size:48px;color:#ddd;"></i>
-                    <p style="color:#888;margin-top:10px;margin-bottom:0;">No selfie captured</p>
+                <label style="font-size:12px;color:#888;display:block;margin-bottom:10px;">Verification Photos</label>
+                
+                <!-- Login Photo -->
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:11px;color:var(--green-main);display:block;font-weight:600;margin-bottom:6px;">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Login Selfie
+                    </label>
+                    {% if dtr_log.selfie %}
+                    <img src="{{ dtr_log.selfie.url }}" alt="Login Selfie" 
+                         style="max-width:100%;max-height:250px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);cursor:pointer;border:3px solid var(--green-main);"
+                         onclick="window.open('{{ dtr_log.selfie.url }}', '_blank')" title="Click to view full size">
+                    {% else %}
+                    <div style="padding:30px;background:#f8f9fa;border-radius:12px;">
+                        <i class="bi bi-camera-fill" style="font-size:36px;color:#ddd;"></i>
+                        <p style="color:#888;margin-top:8px;margin-bottom:0;font-size:12px;">No photo</p>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
+
+                <!-- Logout Photo -->
+                <div>
+                    <label style="font-size:11px;color:var(--gold-dark);display:block;font-weight:600;margin-bottom:6px;">
+                        <i class="bi bi-box-arrow-right me-1"></i>Logout Selfie
+                    </label>
+                    {% if dtr_log.logout_selfie %}
+                    <img src="{{ dtr_log.logout_selfie.url }}" alt="Logout Selfie" 
+                         style="max-width:100%;max-height:250px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);cursor:pointer;border:3px solid var(--gold);"
+                         onclick="window.open('{{ dtr_log.logout_selfie.url }}', '_blank')" title="Click to view full size">
+                    {% elif dtr_log.time_out %}
+                    <div style="padding:30px;background:#fff3cd;border-radius:12px;border:2px dashed #ff9800;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size:36px;color:#ff9800;"></i>
+                        <p style="color:#856404;margin-top:8px;margin-bottom:0;font-size:12px;">No logout photo</p>
+                    </div>
+                    {% else %}
+                    <div style="padding:30px;background:#f8f9fa;border-radius:12px;">
+                        <i class="bi bi-camera-fill" style="font-size:36px;color:#ddd;"></i>
+                        <p style="color:#888;margin-top:8px;margin-bottom:0;font-size:12px;">Not logged out yet</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
