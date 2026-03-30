@@ -52,14 +52,28 @@
             <!-- Selfie Section -->
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Login Photo</label>
+                    <label class="form-label">Login Photo <span class="text-danger">*</span></label>
                     <div style="background:#f8f9fa;border-radius:12px;padding:16px;text-align:center;">
-                        {% if rejected_dtr.selfie %}
-                        <img src="{{ rejected_dtr.selfie.url }}" alt="Current Login Photo" 
-                             style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;">
-                        <p style="font-size:12px;color:#888;">Current login photo</p>
-                        {% endif %}
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="captureLoginSelfie()">
+                        <!-- Current Photo (will be hidden when new photo is captured) -->
+                        <div id="currentLoginPhoto">
+                            {% if rejected_dtr.selfie %}
+                            <img src="{{ rejected_dtr.selfie.url }}" alt="Current Login Photo" 
+                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #dc3545;">
+                            <p style="font-size:12px;color:#dc3545;font-weight:600;">Old photo (rejected)</p>
+                            {% else %}
+                            <div style="padding:30px;color:#aaa;">
+                                <i class="bi bi-camera" style="font-size:36px;"></i>
+                                <p class="mt-2 mb-0">No photo</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <!-- New Photo Preview (hidden by default) -->
+                        <div id="newLoginPhotoPreview" style="display:none;">
+                            <img id="newLoginPhotoImg" src="" alt="New Login Photo" 
+                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #28a745;">
+                            <p style="font-size:12px;color:#28a745;font-weight:600;">✓ New photo captured</p>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary mt-2" onclick="captureLoginSelfie()">
                             <i class="bi bi-camera me-1"></i>Capture New Photo
                         </button>
                         <input type="hidden" name="selfie_data" id="selfieData">
@@ -69,12 +83,26 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Logout Photo</label>
                     <div style="background:#f8f9fa;border-radius:12px;padding:16px;text-align:center;">
-                        {% if rejected_dtr.logout_selfie %}
-                        <img src="{{ rejected_dtr.logout_selfie.url }}" alt="Current Logout Photo" 
-                             style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;">
-                        <p style="font-size:12px;color:#888;">Current logout photo</p>
-                        {% endif %}
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="captureLogoutSelfie()">
+                        <!-- Current Photo (will be hidden when new photo is captured) -->
+                        <div id="currentLogoutPhoto">
+                            {% if rejected_dtr.logout_selfie %}
+                            <img src="{{ rejected_dtr.logout_selfie.url }}" alt="Current Logout Photo" 
+                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #dc3545;">
+                            <p style="font-size:12px;color:#dc3545;font-weight:600;">Old photo (rejected)</p>
+                            {% else %}
+                            <div style="padding:30px;color:#aaa;">
+                                <i class="bi bi-camera" style="font-size:36px;"></i>
+                                <p class="mt-2 mb-0">No photo</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <!-- New Photo Preview (hidden by default) -->
+                        <div id="newLogoutPhotoPreview" style="display:none;">
+                            <img id="newLogoutPhotoImg" src="" alt="New Logout Photo" 
+                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #28a745;">
+                            <p style="font-size:12px;color:#28a745;font-weight:600;">✓ New photo captured</p>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary mt-2" onclick="captureLogoutSelfie()">
                             <i class="bi bi-camera me-1"></i>Capture New Photo
                         </button>
                         <input type="hidden" name="logout_selfie_data" id="logoutSelfieData">
@@ -162,12 +190,16 @@ function takeLoginPhoto() {
     const imageData = canvas.toDataURL('image/jpeg');
     document.getElementById('selfieData').value = imageData;
     
+    // Show preview of new photo
+    document.getElementById('currentLoginPhoto').style.display = 'none';
+    document.getElementById('newLoginPhotoPreview').style.display = 'block';
+    document.getElementById('newLoginPhotoImg').src = imageData;
+    
     if (loginStream) {
         loginStream.getTracks().forEach(track => track.stop());
     }
     
     bootstrap.Modal.getInstance(document.getElementById('loginSelfieModal')).hide();
-    alert('Login photo captured successfully!');
 }
 
 function captureLogoutSelfie() {
@@ -196,12 +228,31 @@ function takeLogoutPhoto() {
     const imageData = canvas.toDataURL('image/jpeg');
     document.getElementById('logoutSelfieData').value = imageData;
     
+    // Show preview of new photo
+    document.getElementById('currentLogoutPhoto').style.display = 'none';
+    document.getElementById('newLogoutPhotoPreview').style.display = 'block';
+    document.getElementById('newLogoutPhotoImg').src = imageData;
+    
     if (logoutStream) {
         logoutStream.getTracks().forEach(track => track.stop());
     }
     
     bootstrap.Modal.getInstance(document.getElementById('logoutSelfieModal')).hide();
-    alert('Logout photo captured successfully!');
 }
+
+// Clean up camera streams when modals are closed
+document.getElementById('loginSelfieModal').addEventListener('hidden.bs.modal', function () {
+    if (loginStream) {
+        loginStream.getTracks().forEach(track => track.stop());
+        loginStream = null;
+    }
+});
+
+document.getElementById('logoutSelfieModal').addEventListener('hidden.bs.modal', function () {
+    if (logoutStream) {
+        logoutStream.getTracks().forEach(track => track.stop());
+        logoutStream = null;
+    }
+});
 </script>
 {% endblock %}
