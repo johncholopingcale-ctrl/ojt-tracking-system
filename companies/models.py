@@ -199,7 +199,8 @@ class Assignment(models.Model):
     )
 
     required_hours = models.FloatField(
-        help_text="Total hours required to complete OJT (must be specified)"
+        default=400,
+        help_text="Total hours required to complete OJT (default: 400 hours)"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

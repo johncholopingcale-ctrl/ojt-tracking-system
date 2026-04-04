@@ -61,7 +61,7 @@
                             <i class="bi bi-clock me-1"></i> Required Hours
                         </label>
                         {{ form.required_hours }}
-                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Default is 486 hours for CHMSU OJT program</small>
+                        <small style="color:#888;font-size:11px;display:block;margin-top:4px;">Default is 400 hours (8 hrs/day × 50 working days)</small>
                         {% if form.required_hours.errors %}
                         <small class="text-danger">{{ form.required_hours.errors.0 }}</small>
                         {% endif %}
@@ -171,6 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const hoursPerDayEl = document.getElementById('hoursPerDay');
     const hoursPerWeekEl = document.getElementById('hoursPerWeek');
     const calculatorNote = document.getElementById('calculatorNote');
+    
+    const HOURS_PER_DAY = 8;
 
     function countWorkingDays(startDate, endDate) {
         let count = 0;
@@ -187,7 +189,41 @@ document.addEventListener('DOMContentLoaded', function() {
         return count;
     }
 
-    function calculateHours() {
+    function addWorkingDays(startDate, workingDaysToAdd) {
+        let current = new Date(startDate);
+        let addedDays = 0;
+        
+        while (addedDays < workingDaysToAdd) {
+            current.setDate(current.getDate() + 1);
+            const day = current.getDay();
+            if (day !== 0 && day !== 6) {
+                addedDays++;
+            }
+        }
+        return current;
+    }
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function calculateEndDate() {
+        const startDate = startDateInput.value;
+        const requiredHours = parseFloat(requiredHoursInput.value);
+
+        if (startDate && requiredHours > 0) {
+            const start = new Date(startDate);
+            const workingDaysNeeded = Math.ceil(requiredHours / HOURS_PER_DAY);
+            const endDate = addWorkingDays(start, workingDaysNeeded - 1);
+            endDateInput.value = formatDate(endDate);
+            updateCalculator();
+        }
+    }
+
+    function updateCalculator() {
         const startDate = startDateInput.value;
         const endDate = endDateInput.value;
         const requiredHours = parseFloat(requiredHoursInput.value);
@@ -199,21 +235,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (end >= start) {
                 const workingDays = countWorkingDays(start, end);
                 const weeks = workingDays / 5;
-                const hoursPerDay = requiredHours / workingDays;
-                const hoursPerWeek = requiredHours / weeks;
 
                 calculator.style.display = 'block';
                 totalDaysEl.textContent = workingDays;
-                hoursPerDayEl.textContent = hoursPerDay.toFixed(1);
-                hoursPerWeekEl.textContent = hoursPerWeek.toFixed(1);
+                hoursPerDayEl.textContent = HOURS_PER_DAY;
+                hoursPerWeekEl.textContent = (HOURS_PER_DAY * 5).toFixed(0);
 
-                if (hoursPerDay > 8) {
-                    calculatorNote.innerHTML = '<span style="color:#dc3545;"><i class="bi bi-exclamation-triangle me-1"></i>Warning: More than 8 hours/day required. Consider extending the end date.</span>';
-                } else if (hoursPerDay < 4) {
-                    calculatorNote.innerHTML = '<span style="color:var(--green-main);"><i class="bi bi-check-circle me-1"></i>Light schedule - student has flexibility.</span>';
-                } else {
-                    calculatorNote.innerHTML = '<span style="color:#666;"><i class="bi bi-info-circle me-1"></i>Based on Monday-Friday working days only.</span>';
-                }
+                calculatorNote.innerHTML = '<span style="color:var(--green-main);"><i class="bi bi-check-circle me-1"></i>End date auto-calculated at 8 hours/day (Mon-Fri).</span>';
             } else {
                 calculator.style.display = 'none';
             }
@@ -222,12 +250,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    startDateInput.addEventListener('change', calculateHours);
-    endDateInput.addEventListener('change', calculateHours);
-    requiredHoursInput.addEventListener('input', calculateHours);
+    // Auto-calculate end date when start date or required hours change
+    startDateInput.addEventListener('change', calculateEndDate);
+    requiredHoursInput.addEventListener('input', calculateEndDate);
+    
+    // Also update calculator if user manually changes end date
+    endDateInput.addEventListener('change', updateCalculator);
 
     // Calculate on page load if values exist
-    calculateHours();
+    if (startDateInput.value && requiredHoursInput.value) {
+        calculateEndDate();
+    }
 });
 </script>
 {% endblock %}

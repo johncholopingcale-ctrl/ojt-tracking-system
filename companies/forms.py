@@ -62,7 +62,7 @@ class AssignmentForm(forms.ModelForm):
             'company': forms.Select(attrs={'class': 'form-control'}),
             'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'required_hours': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.5'}),
+            'required_hours': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.5', 'value': '400'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -74,6 +74,9 @@ class AssignmentForm(forms.ModelForm):
         self.fields['student'].queryset = students
         # Display full name instead of username
         self.fields['student'].label_from_instance = lambda obj: obj.get_full_name()
+        # Set default required hours to 400
+        if not self.instance.pk:
+            self.fields['required_hours'].initial = 400
 
     def clean(self):
         """
