@@ -36,7 +36,10 @@ class CompanyForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Limit supervisor choices to users with supervisor role
-        self.fields['supervisor'].queryset = User.objects.filter(role='supervisor')
+        supervisors = User.objects.filter(role='supervisor')
+        self.fields['supervisor'].queryset = supervisors
+        # Display full name instead of username
+        self.fields['supervisor'].label_from_instance = lambda obj: obj.get_full_name()
 
 
 class AssignmentForm(forms.ModelForm):
