@@ -35,8 +35,10 @@ class CompanyForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Limit supervisor choices to users with supervisor role
-        supervisors = User.objects.filter(role='supervisor')
+        # Only show supervisors who have first and last name set
+        supervisors = User.objects.filter(
+            role='supervisor'
+        ).exclude(first_name='').exclude(last_name='')
         self.fields['supervisor'].queryset = supervisors
         # Display full name instead of username
         self.fields['supervisor'].label_from_instance = lambda obj: obj.get_full_name()
@@ -65,8 +67,11 @@ class AssignmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Limit student choices to users with student role
-        self.fields['student'].queryset = User.objects.filter(role='student')
+        # Only show students who have first and last name set
+        students = User.objects.filter(
+            role='student'
+        ).exclude(first_name='').exclude(last_name='')
+        self.fields['student'].queryset = students
         # Display full name instead of username
         self.fields['student'].label_from_instance = lambda obj: obj.get_full_name()
 

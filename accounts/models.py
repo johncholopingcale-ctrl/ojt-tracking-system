@@ -157,10 +157,14 @@ class User(AbstractUser):
         3. The data access is controlled and consistent
 
         Returns:
-            str: Full name or username if name is empty
+            str: Full name or "No name set" if name is empty
         """
         full_name = f"{self.first_name} {self.last_name}".strip()
-        return full_name if full_name else self.username
+        return full_name if full_name else "No name set"
+
+    def has_full_name(self):
+        """Check if user has both first and last name set."""
+        return bool(self.first_name and self.last_name)
 
     def get_role_display_label(self):
         """
