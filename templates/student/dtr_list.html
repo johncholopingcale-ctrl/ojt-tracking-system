@@ -4,6 +4,23 @@
 {% block page_subtitle %}Daily Time Record{% endblock %}
 
 {% block student_content %}
+<!-- Rejected DTR Warning Banner -->
+{% if rejected_dtr_count > 0 %}
+<div class="alert fade-up" style="background:linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);border:1px solid #f5c6cb;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;">
+    <div style="background:#dc3545;color:#fff;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size:24px;"></i>
+    </div>
+    <div style="flex:1;">
+        <div style="font-weight:700;color:#721c24;font-size:15px;">
+            <i class="bi bi-x-circle-fill me-1"></i>{{ rejected_dtr_count }} DTR Log{{ rejected_dtr_count|pluralize }} Rejected
+        </div>
+        <div style="color:#856404;font-size:13px;margin-top:2px;">
+            Your supervisor has rejected {{ rejected_dtr_count }} DTR entr{{ rejected_dtr_count|pluralize:"y,ies" }}. Review the feedback below and click the <i class="bi bi-arrow-clockwise"></i> button to resubmit.
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Header -->
 <div class="section-header fade-up">
     <div class="section-title"><i class="bi bi-clock-history me-2"></i>My DTR Logs</div>

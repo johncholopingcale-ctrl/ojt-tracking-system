@@ -4,6 +4,26 @@
 {% block page_subtitle %}Overview of your OJT progress{% endblock %}
 
 {% block student_content %}
+<!-- Rejected DTR Warning Banner -->
+{% if rejected_dtr_count > 0 %}
+<div class="alert fade-up" style="background:linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);border:1px solid #f5c6cb;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;">
+    <div style="background:#dc3545;color:#fff;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size:24px;"></i>
+    </div>
+    <div style="flex:1;">
+        <div style="font-weight:700;color:#721c24;font-size:15px;">
+            <i class="bi bi-x-circle-fill me-1"></i>{{ rejected_dtr_count }} DTR Log{{ rejected_dtr_count|pluralize }} Rejected
+        </div>
+        <div style="color:#856404;font-size:13px;margin-top:2px;">
+            Your supervisor has rejected {{ rejected_dtr_count }} DTR entr{{ rejected_dtr_count|pluralize:"y,ies" }}. Please review the feedback and resubmit.
+        </div>
+    </div>
+    <a href="{% url 'student:dtr_list' %}" class="btn-green" style="padding:10px 20px;text-decoration:none;white-space:nowrap;">
+        <i class="bi bi-arrow-right-circle me-1"></i>View & Resubmit
+    </a>
+</div>
+{% endif %}
+
 <!-- Welcome Banner -->
 <div class="dashboard-banner fade-up">
     <div class="banner-greeting">Welcome back, {{ user.first_name|default:user.username }}! 👋</div>

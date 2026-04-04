@@ -98,6 +98,12 @@ class StudentDashboardView(StudentRequiredMixin, TemplateView):
             student=student
         ).order_by('-date')[:5]
 
+        # Rejected DTR count for warning banner
+        context['rejected_dtr_count'] = DTRLog.objects.filter(
+            student=student,
+            confirmation_status='rejected'
+        ).count()
+
         # Recent evaluations
         context['evaluations'] = Evaluation.objects.filter(
             student=student
@@ -144,6 +150,11 @@ class DTRListView(StudentRequiredMixin, ListView):
         context['total_hours'] = self.get_queryset().aggregate(
             total=Sum('hours_rendered')
         )['total'] or 0
+
+        # Rejected DTR count for warning banner
+        context['rejected_dtr_count'] = self.get_queryset().filter(
+            confirmation_status='rejected'
+        ).count()
 
         return context
 
