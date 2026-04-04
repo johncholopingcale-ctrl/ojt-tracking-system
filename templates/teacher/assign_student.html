@@ -67,6 +67,36 @@
                         {% endif %}
                     </div>
 
+                    <!-- Hours Calculator Display -->
+                    <div id="hoursCalculator" class="mb-4" style="display:none;">
+                        <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:12px;padding:16px 20px;border-left:4px solid var(--green-main);">
+                            <div style="font-weight:600;color:var(--green-dark);margin-bottom:12px;">
+                                <i class="bi bi-calculator me-2"></i>Hours Breakdown
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-4 text-center">
+                                    <div style="background:white;border-radius:10px;padding:12px 8px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                        <div id="totalDays" style="font-size:24px;font-weight:700;color:var(--green-main);">-</div>
+                                        <div style="font-size:11px;color:#888;">Working Days</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div style="background:white;border-radius:10px;padding:12px 8px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                        <div id="hoursPerDay" style="font-size:24px;font-weight:700;color:var(--orange);">-</div>
+                                        <div style="font-size:11px;color:#888;">Hours/Day</div>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div style="background:white;border-radius:10px;padding:12px 8px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                        <div id="hoursPerWeek" style="font-size:24px;font-weight:700;color:var(--gold);">-</div>
+                                        <div style="font-size:11px;color:#888;">Hours/Week</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="calculatorNote" style="font-size:11px;color:#666;margin-top:12px;text-align:center;"></div>
+                        </div>
+                    </div>
+
                     {% if form.non_field_errors %}
                     <div class="alert alert-danger" style="border-radius:10px;">
                         <i class="bi bi-exclamation-triangle me-2"></i>
@@ -128,5 +158,77 @@
     outline: none;
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('id_start_date');
+    const endDateInput = document.getElementById('id_end_date');
+    const requiredHoursInput = document.getElementById('id_required_hours');
+    const calculator = document.getElementById('hoursCalculator');
+    const totalDaysEl = document.getElementById('totalDays');
+    const hoursPerDayEl = document.getElementById('hoursPerDay');
+    const hoursPerWeekEl = document.getElementById('hoursPerWeek');
+    const calculatorNote = document.getElementById('calculatorNote');
+
+    function countWorkingDays(startDate, endDate) {
+        let count = 0;
+        let current = new Date(startDate);
+        const end = new Date(endDate);
+        
+        while (current <= end) {
+            const day = current.getDay();
+            if (day !== 0 && day !== 6) {
+                count++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        return count;
+    }
+
+    function calculateHours() {
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        const requiredHours = parseFloat(requiredHoursInput.value);
+
+        if (startDate && endDate && requiredHours > 0) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (end >= start) {
+                const workingDays = countWorkingDays(start, end);
+                const weeks = workingDays / 5;
+                const hoursPerDay = requiredHours / workingDays;
+                const hoursPerWeek = requiredHours / weeks;
+
+                calculator.style.display = 'block';
+                totalDaysEl.textContent = workingDays;
+                hoursPerDayEl.textContent = hoursPerDay.toFixed(1);
+                hoursPerWeekEl.textContent = hoursPerWeek.toFixed(1);
+
+                if (hoursPerDay > 8) {
+                    calculatorNote.innerHTML = '<span style="color:#dc3545;"><i class="bi bi-exclamation-triangle me-1"></i>Warning: More than 8 hours/day required. Consider extending the end date.</span>';
+                } else if (hoursPerDay < 4) {
+                    calculatorNote.innerHTML = '<span style="color:var(--green-main);"><i class="bi bi-check-circle me-1"></i>Light schedule - student has flexibility.</span>';
+                } else {
+                    calculatorNote.innerHTML = '<span style="color:#666;"><i class="bi bi-info-circle me-1"></i>Based on Monday-Friday working days only.</span>';
+                }
+            } else {
+                calculator.style.display = 'none';
+            }
+        } else {
+            calculator.style.display = 'none';
+        }
+    }
+
+    startDateInput.addEventListener('change', calculateHours);
+    endDateInput.addEventListener('change', calculateHours);
+    requiredHoursInput.addEventListener('input', calculateHours);
+
+    // Calculate on page load if values exist
+    calculateHours();
+});
+</script>
 {% endblock %}
 {% endblock %}
