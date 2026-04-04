@@ -154,11 +154,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Railway has ephemeral storage, so we use Cloudinary for persistent media files
 CLOUDINARY_URL = config('CLOUDINARY_URL', default='')
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
-    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
-    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
-}
+# Parse CLOUDINARY_URL if provided, otherwise use individual settings
+if CLOUDINARY_URL:
+    import cloudinary
+    cloudinary.config(cloudinary_url=CLOUDINARY_URL)
+    # Extract cloud name from URL for CLOUDINARY_STORAGE
+    cloud_name = CLOUDINARY_URL.split('@')[-1] if '@' in CLOUDINARY_URL else ''
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': cloud_name,
+    }
+else:
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+        'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+        'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+    }
 
 # Use Cloudinary in production (when CLOUDINARY_URL is set or DEBUG is False)
 if CLOUDINARY_URL or not DEBUG:
