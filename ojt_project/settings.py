@@ -152,14 +152,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cloudinary Configuration for Production Media Storage
 # Railway has ephemeral storage, so we use Cloudinary for persistent media files
+CLOUDINARY_URL = config('CLOUDINARY_URL', default='')
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
     'API_KEY': config('CLOUDINARY_API_KEY', default=''),
     'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
 }
 
-# Use Cloudinary in production, local storage in development
-if not DEBUG or config('USE_CLOUDINARY', default=False, cast=bool):
+# Use Cloudinary in production (when CLOUDINARY_URL is set or DEBUG is False)
+if CLOUDINARY_URL or not DEBUG:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
