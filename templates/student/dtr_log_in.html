@@ -168,6 +168,17 @@ startBtn.addEventListener('click', async function() {
 });
 
 captureBtn.addEventListener('click', function() {
+    // Capture the exact timestamp when photo is taken
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    
+    // Auto-fill date and time fields
+    document.getElementById('id_date').value = dateStr;
+    document.getElementById('id_time_in').value = timeStr;
+    
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');

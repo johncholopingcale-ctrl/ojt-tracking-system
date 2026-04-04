@@ -172,6 +172,15 @@ startBtn.addEventListener('click', async function() {
 });
 
 captureBtn.addEventListener('click', function() {
+    // Capture the exact timestamp when photo is taken
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    
+    // Auto-fill time out field
+    document.getElementById('id_time_out').value = timeStr;
+    
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
