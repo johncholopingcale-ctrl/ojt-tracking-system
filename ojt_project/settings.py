@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     # Third-party apps
     'crispy_forms',
     'crispy_bootstrap4',
+    'cloudinary_storage',
+    'cloudinary',
     # Custom apps - each represents a cohesive module following Single Responsibility
     'accounts',      # User authentication and role management
     'companies',     # Company records and student assignments
@@ -147,6 +149,18 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # OOP Concept: File Handling - Managing user-uploaded files like selfies and profile pictures
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary Configuration for Production Media Storage
+# Railway has ephemeral storage, so we use Cloudinary for persistent media files
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+
+# Use Cloudinary in production, local storage in development
+if not DEBUG or config('USE_CLOUDINARY', default=False, cast=bool):
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

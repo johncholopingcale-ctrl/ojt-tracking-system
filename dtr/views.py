@@ -489,23 +489,32 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
             time_in_str = request.POST.get('time_in')
             time_out_str = request.POST.get('time_out')
             notes = request.POST.get('notes', '')
-            selfie_data = request.POST.get('selfie_data')
-            logout_selfie_data = request.POST.get('logout_selfie_data')
+            selfie_data = request.POST.get('selfie_data', '').strip()
+            logout_selfie_data = request.POST.get('logout_selfie_data', '').strip()
             
             # Parse time strings
             from datetime import time
             time_in = datetime.strptime(time_in_str, '%H:%M').time() if time_in_str else rejected_dtr.time_in
             time_out = datetime.strptime(time_out_str, '%H:%M').time() if time_out_str else rejected_dtr.time_out
             
-            # Process selfie uploads
-            selfie = rejected_dtr.selfie
-            logout_selfie = rejected_dtr.logout_selfie
+            # Process selfie uploads - NEW photos are required for resubmission
+            selfie = None
+            logout_selfie = None
             
+            # Login selfie - REQUIRED for resubmission
             if selfie_data and selfie_data.startswith('data:image'):
                 selfie = FileHandler.save_base64_image(selfie_data, 'selfie')
+            else:
+                # No new photo captured - show error
+                messages.error(request, "Please capture a new login photo for your resubmission.")
+                return redirect('student:dtr_resubmit', pk=rejected_dtr.pk)
             
+            # Logout selfie - optional but use new one if captured
             if logout_selfie_data and logout_selfie_data.startswith('data:image'):
                 logout_selfie = FileHandler.save_base64_image(logout_selfie_data, 'logout_selfie')
+            elif rejected_dtr.logout_selfie:
+                # Keep the old logout selfie if no new one captured
+                logout_selfie = rejected_dtr.logout_selfie
             
             # Create new DTR entry with pending status (marked as resubmission)
             new_dtr = DTRLog.objects.create(
@@ -517,13 +526,14 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
                 logout_selfie=logout_selfie,
                 notes=notes,
                 confirmation_status='pending',
-                is_resubmission=True  # Mark as resubmission for supervisor review
+                is_resubmission=True,  # Mark as resubmission for supervisor review
+                is_valid=True  # Reset validity for new submission
             )
             
             # Delete the old rejected DTR
             rejected_dtr.delete()
             
-            messages.success(request, f"DTR for {rejected_dtr.date} has been resubmitted successfully! It is now pending supervisor verification.")
+            messages.success(request, f"DTR for {rejected_dtr.date} has been resubmitted with new photo! It is now pending supervisor verification.")
             return redirect('student:dtr_list')
             
         except Exception as e:
