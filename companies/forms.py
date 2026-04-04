@@ -67,6 +67,8 @@ class AssignmentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Limit student choices to users with student role
         self.fields['student'].queryset = User.objects.filter(role='student')
+        # Display full name instead of username
+        self.fields['student'].label_from_instance = lambda obj: obj.get_full_name()
 
     def clean(self):
         """
