@@ -203,18 +203,18 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="id_first_name" class="form-label">
-                            <i class="bi bi-person me-1"></i>First Name
+                            <i class="bi bi-person me-1"></i>First Name <span class="text-danger">*</span>
                         </label>
-                        <input type="text" name="first_name" id="id_first_name" class="form-control" placeholder="Juan" value="{{ form.first_name.value|default:'' }}">
+                        <input type="text" name="first_name" id="id_first_name" class="form-control" placeholder="Juan" value="{{ form.first_name.value|default:'' }}" required>
                         {% if form.first_name.errors %}
                             <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.first_name.errors.0 }}</small>
                         {% endif %}
                     </div>
                     <div class="col-md-6">
                         <label for="id_last_name" class="form-label">
-                            <i class="bi bi-person me-1"></i>Last Name
+                            <i class="bi bi-person me-1"></i>Last Name <span class="text-danger">*</span>
                         </label>
-                        <input type="text" name="last_name" id="id_last_name" class="form-control" placeholder="Dela Cruz" value="{{ form.last_name.value|default:'' }}">
+                        <input type="text" name="last_name" id="id_last_name" class="form-control" placeholder="Dela Cruz" value="{{ form.last_name.value|default:'' }}" required>
                         {% if form.last_name.errors %}
                             <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.last_name.errors.0 }}</small>
                         {% endif %}
