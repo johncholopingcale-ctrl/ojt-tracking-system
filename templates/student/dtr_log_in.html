@@ -263,7 +263,8 @@ captureBtn.addEventListener('click', function() {
     const dateStr = `${year}-${month}-${day}`;
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    const timeStr = `${hours}:${minutes}`;
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}:${seconds}`;
     
     // Auto-fill date and time fields
     document.getElementById('id_date').value = dateStr;
