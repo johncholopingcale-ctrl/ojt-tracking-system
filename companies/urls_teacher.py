@@ -28,7 +28,7 @@ urlpatterns = [
     # Student Management (View only - students register themselves)
     path('students/', views.StudentListView.as_view(), name='students'),
     # path('student/add/', views.StudentCreateView.as_view(), name='student_add'),  # Removed - students self-register
-    path('student/<int:pk>/edit/', views.StudentUpdateView.as_view(), name='student_edit'),
+    # path('student/<int:pk>/edit/', views.StudentUpdateView.as_view(), name='student_edit'),  # Removed - students edit their own info
     path('student/<int:pk>/delete/', views.StudentDeleteView.as_view(), name='student_delete'),
     path('student/<int:pk>/reset-password/', views.StudentResetPasswordView.as_view(), name='student_reset_password'),
 

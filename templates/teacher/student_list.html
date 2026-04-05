@@ -44,9 +44,6 @@
                     <td style="font-size:13px;">{{ student.phone|default:"-" }}</td>
                     <td>
                         <div class="action-icons">
-                            <a href="{% url 'teacher:student_edit' student.pk %}" class="icon-btn edit" title="Edit">
-                                <i class="bi bi-pencil-fill"></i>
-                            </a>
                             <a href="{% url 'teacher:student_reset_password' student.pk %}" class="icon-btn view" title="Reset Password">
                                 <i class="bi bi-key-fill"></i>
                             </a>

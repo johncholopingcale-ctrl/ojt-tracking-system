@@ -29,7 +29,7 @@ Inheritance chain: base.html -> base_teacher.html -> specific_page.html
             </a>
         </div>
         <div class="nav-item">
-            <a href="{% url 'teacher:students' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'students' or request.resolver_match.url_name == 'student_edit' %}active{% endif %}">
+            <a href="{% url 'teacher:students' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'students' %}active{% endif %}">
                 <i class="bi bi-people-fill"></i> Students
             </a>
         </div>
