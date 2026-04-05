@@ -151,13 +151,9 @@ class RegisterView(CreateView):
         # Let parent create the user
         response = super().form_valid(form)
 
-        # Get the created user for the message
-        user = form.instance
-
         messages.success(
             self.request,
-            f"Account created successfully! Welcome {user.get_full_name()}. "
-            f"Please log in to continue."
+            "Registration successful! Please log in to continue."
         )
 
         # Redirect to login page
