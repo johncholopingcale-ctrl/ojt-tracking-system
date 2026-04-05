@@ -51,13 +51,33 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if assignment.login_status == 'Logged In' %}
+                        {% if assignment.login_status == 'pending_login' %}
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;">
+                            <i class="bi bi-hourglass-split"></i> Pending Login
+                        </span>
+                        {% elif assignment.login_status == 'rejected_login' %}
+                        <span class="status-badge" style="background:#f8d7da;color:#721c24;">
+                            <i class="bi bi-x-circle"></i> Login Rejected
+                        </span>
+                        {% elif assignment.login_status == 'logged_in' %}
                         <span class="status-badge" style="background:#d4edda;color:#155724;">
                             <i class="bi bi-check-circle-fill"></i> Logged In
                         </span>
-                        {% else %}
+                        {% elif assignment.login_status == 'pending_logout' %}
                         <span class="status-badge" style="background:#fff3cd;color:#856404;">
-                            <i class="bi bi-clock"></i> Logged Out
+                            <i class="bi bi-hourglass-split"></i> Pending Logout
+                        </span>
+                        {% elif assignment.login_status == 'rejected_logout' %}
+                        <span class="status-badge" style="background:#f8d7da;color:#721c24;">
+                            <i class="bi bi-x-circle"></i> Logout Rejected
+                        </span>
+                        {% elif assignment.login_status == 'logged_out' %}
+                        <span class="status-badge" style="background:#e9ecef;color:#495057;">
+                            <i class="bi bi-box-arrow-right"></i> Logged Out
+                        </span>
+                        {% else %}
+                        <span class="status-badge" style="background:#f8f9fa;color:#888;">
+                            <i class="bi bi-dash-circle"></i> No Activity
                         </span>
                         {% endif %}
                     </td>

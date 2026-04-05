@@ -125,14 +125,32 @@ class InternListView(SupervisorRequiredMixin, ListView):
         companies = Company.objects.filter(supervisor=supervisor)
         assignments = Assignment.objects.filter(company__in=companies).order_by('-start_date')
         
-        # Annotate each assignment with latest DTR date
+        # Annotate each assignment with latest DTR date and status
         for assignment in assignments:
             latest_dtr = DTRLog.objects.filter(
                 student=assignment.student
             ).order_by('-date').first()
             
             assignment.latest_login_date = latest_dtr.date if latest_dtr else None
-            assignment.login_status = 'Logged In' if (latest_dtr and not latest_dtr.time_out) else 'Logged Out'
+            
+            # Determine the current status based on confirmation workflow
+            if latest_dtr:
+                if latest_dtr.login_confirmation_status == 'pending':
+                    assignment.login_status = 'pending_login'
+                elif latest_dtr.login_confirmation_status == 'rejected':
+                    assignment.login_status = 'rejected_login'
+                elif latest_dtr.login_confirmation_status == 'confirmed' and not latest_dtr.time_out:
+                    assignment.login_status = 'logged_in'
+                elif latest_dtr.time_out and latest_dtr.logout_confirmation_status == 'pending':
+                    assignment.login_status = 'pending_logout'
+                elif latest_dtr.time_out and latest_dtr.logout_confirmation_status == 'rejected':
+                    assignment.login_status = 'rejected_logout'
+                elif latest_dtr.time_out and latest_dtr.logout_confirmation_status == 'confirmed':
+                    assignment.login_status = 'logged_out'
+                else:
+                    assignment.login_status = 'unknown'
+            else:
+                assignment.login_status = 'no_dtr'
         
         return assignments
 
