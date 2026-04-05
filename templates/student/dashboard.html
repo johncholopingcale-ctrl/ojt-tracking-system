@@ -31,7 +31,6 @@
     {% if assignment %}
     <div class="banner-chips">
         <div class="banner-chip"><i class="bi bi-building-fill"></i> {{ company.name|default:"Not assigned" }}</div>
-        <div class="banner-chip"><i class="bi bi-clock-fill"></i> {{ required_hours|floatformat:0 }}-Hour Program</div>
         <div class="banner-chip"><i class="bi bi-calendar-range"></i> {{ assignment.start_date|date:"M d" }} - {{ assignment.end_date|date:"M d, Y" }}</div>
     </div>
     {% endif %}
