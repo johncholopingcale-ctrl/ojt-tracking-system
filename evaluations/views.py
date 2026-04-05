@@ -435,7 +435,7 @@ class PendingDTRListView(SupervisorRequiredMixin, ListView):
             company__in=companies
         ).values_list('student_id', flat=True)
 
-        filter_type = self.request.GET.get('filter', 'all')
+        filter_type = self.request.GET.get('filter', 'login')
         
         base_query = DTRLog.objects.filter(student_id__in=student_ids)
         
@@ -444,17 +444,11 @@ class PendingDTRListView(SupervisorRequiredMixin, ListView):
             return base_query.filter(
                 login_confirmation_status='pending'
             ).order_by('-date', '-created_at')
-        elif filter_type == 'logout':
+        else:
             # Pending logout confirmations (only where they've actually logged out)
             return base_query.filter(
                 time_out__isnull=False,
                 logout_confirmation_status='pending'
-            ).order_by('-date', '-created_at')
-        else:
-            # All pending (either login or logout pending)
-            return base_query.filter(
-                Q(login_confirmation_status='pending') |
-                Q(time_out__isnull=False, logout_confirmation_status='pending')
             ).order_by('-date', '-created_at')
 
     def get_context_data(self, **kwargs):
@@ -479,6 +473,6 @@ class PendingDTRListView(SupervisorRequiredMixin, ListView):
         ).count()
         
         context['pending_count'] = context['pending_login_count'] + context['pending_logout_count']
-        context['current_filter'] = self.request.GET.get('filter', 'all')
+        context['current_filter'] = self.request.GET.get('filter', 'login')
         
         return context
