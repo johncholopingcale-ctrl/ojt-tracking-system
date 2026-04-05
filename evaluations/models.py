@@ -212,6 +212,7 @@ class Evaluation(OJTBaseModel):
             ValidationError: If validation fails
         """
         from django.core.exceptions import ValidationError
+        from django.utils import timezone
 
         # Ensure supervisor can only evaluate students at their company
         if self.supervisor and self.student:
@@ -228,4 +229,20 @@ class Evaluation(OJTBaseModel):
             if not valid_assignment:
                 raise ValidationError(
                     "You can only evaluate students assigned to your company."
+                )
+
+            # Check for duplicate evaluation on the same date
+            today = timezone.now().date()
+            existing = Evaluation.objects.filter(
+                supervisor=self.supervisor,
+                student=self.student,
+                created_at__date=today
+            )
+            # Exclude current instance if editing
+            if self.pk:
+                existing = existing.exclude(pk=self.pk)
+            
+            if existing.exists():
+                raise ValidationError(
+                    "You have already submitted an evaluation for this student today."
                 )

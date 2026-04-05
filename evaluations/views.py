@@ -266,12 +266,16 @@ class EvaluationCreateView(SupervisorRequiredMixin, CreateView):
 
     def form_valid(self, form):
         """Handle successful form submission."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
         try:
+            # Run model validation
+            form.instance.full_clean()
             response = super().form_valid(form)
             messages.success(self.request, "Evaluation submitted successfully!")
             return response
-        except OJTValidationError as e:
-            messages.error(self.request, str(e))
+        except (OJTValidationError, DjangoValidationError) as e:
+            error_msg = str(e) if isinstance(e, OJTValidationError) else e.messages[0] if hasattr(e, 'messages') else str(e)
+            messages.error(self.request, error_msg)
             return self.form_invalid(form)
 
 
