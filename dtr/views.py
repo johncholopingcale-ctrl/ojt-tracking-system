@@ -20,7 +20,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, CreateView, UpdateView, DeleteView, ListView
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, Q
 
 from accounts.mixins import StudentRequiredMixin
 from accounts.utils import FileHandler
@@ -146,14 +146,27 @@ class DTRListView(StudentRequiredMixin, ListView):
         """Add statistics to context."""
         context = super().get_context_data(**kwargs)
 
+        queryset = self.get_queryset()
+        
         # Total hours
-        context['total_hours'] = self.get_queryset().aggregate(
+        context['total_hours'] = queryset.aggregate(
             total=Sum('hours_rendered')
         )['total'] or 0
 
-        # Rejected DTR count for warning banner
-        context['rejected_dtr_count'] = self.get_queryset().filter(
-            confirmation_status='rejected'
+        # Rejected DTR count for warning banner (either login or logout rejected)
+        context['rejected_dtr_count'] = queryset.filter(
+            Q(login_confirmation_status='rejected') | Q(logout_confirmation_status='rejected')
+        ).count()
+        
+        # Pending login confirmations
+        context['pending_login_count'] = queryset.filter(
+            login_confirmation_status='pending'
+        ).count()
+        
+        # Pending logout confirmations
+        context['pending_logout_count'] = queryset.filter(
+            logout_confirmation_status='pending',
+            time_out__isnull=False
         ).count()
 
         return context
@@ -234,6 +247,7 @@ class DTRLogInView(StudentRequiredMixin, CreateView):
     OOP Concept: SEPARATION OF CONCERNS
     ----------------------------------
     Separate view for logging in vs logging out.
+    Login now requires supervisor confirmation before logout is allowed.
     
     CRUD Operation: CREATE - Creating new DTR record with time_in only
     """
@@ -249,8 +263,27 @@ class DTRLogInView(StudentRequiredMixin, CreateView):
         form.instance.student = self.request.user
         return form
     
+    def get_context_data(self, **kwargs):
+        """Add pending login info to context."""
+        context = super().get_context_data(**kwargs)
+        from datetime import date
+        
+        # Check if there's already a pending login for today
+        today_log = DTRLog.objects.filter(
+            student=self.request.user,
+            date=date.today()
+        ).first()
+        
+        context['today_log'] = today_log
+        if today_log:
+            context['has_pending_login'] = today_log.is_login_pending()
+            context['login_confirmed'] = today_log.is_login_confirmed()
+            context['login_rejected'] = today_log.is_login_rejected()
+        
+        return context
+    
     def form_valid(self, form):
-        """Handle log-in with selfie processing."""
+        """Handle log-in with selfie processing. Sets login_confirmation_status to pending."""
         try:
             # Set the student to current user
             form.instance.student = self.request.user
@@ -276,8 +309,16 @@ class DTRLogInView(StudentRequiredMixin, CreateView):
                 messages.error(self.request, "Please capture a selfie before submitting.")
                 return self.form_invalid(form)
             
+            # Set login confirmation status to pending (requires supervisor approval)
+            form.instance.login_confirmation_status = 'pending'
+            form.instance.confirmation_status = 'pending'  # Overall status also pending
+            
             response = super().form_valid(form)
-            messages.success(self.request, "Logged in successfully! Don't forget to log out later.")
+            messages.success(
+                self.request, 
+                "Logged in successfully! Your login is pending supervisor confirmation. "
+                "You can log out once your supervisor confirms your login."
+            )
             return response
             
         except OJTValidationError as e:
@@ -295,6 +336,7 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
     OOP Concept: SEPARATION OF CONCERNS
     ----------------------------------
     Separate view for logging out.
+    Login must be confirmed by supervisor before logout is allowed.
     
     CRUD Operation: UPDATE - Updating DTR record with time_out
     """
@@ -315,8 +357,18 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
         except DTRLog.DoesNotExist:
             return None
     
+    def get_context_data(self, **kwargs):
+        """Add login confirmation status to context."""
+        context = super().get_context_data(**kwargs)
+        if self.object:
+            context['login_confirmed'] = self.object.is_login_confirmed()
+            context['login_pending'] = self.object.is_login_pending()
+            context['login_rejected'] = self.object.is_login_rejected()
+            context['can_logout'] = self.object.can_logout()
+        return context
+    
     def get(self, request, *args, **kwargs):
-        """Check if there's a log-in entry to log out from."""
+        """Check if there's a log-in entry to log out from and if login is confirmed."""
         self.object = self.get_object()
         if not self.object:
             messages.error(request, "You haven't logged in today. Please log in first.")
@@ -324,10 +376,27 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
         if self.object.time_out:
             messages.warning(request, f"You already logged out today at {self.object.get_time_out_formatted()}.")
             return redirect('student:dtr_list')
+        
+        # Check if login is confirmed - allow viewing but show message
+        if not self.object.is_login_confirmed():
+            if self.object.is_login_pending():
+                messages.warning(
+                    request, 
+                    "Your login is pending supervisor confirmation. "
+                    "You can log out once your supervisor confirms your login."
+                )
+            elif self.object.is_login_rejected():
+                messages.error(
+                    request, 
+                    "Your login was rejected by your supervisor. "
+                    "Please check the rejection reason and resubmit if needed."
+                )
+                return redirect('student:dtr_list')
+        
         return super().get(request, *args, **kwargs)
     
     def post(self, request, *args, **kwargs):
-        """Handle log-out submission."""
+        """Handle log-out submission. Requires login to be confirmed."""
         self.object = self.get_object()
         if not self.object:
             messages.error(request, "You haven't logged in today. Please log in first.")
@@ -335,10 +404,25 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
         if self.object.time_out:
             messages.warning(request, "You already logged out today.")
             return redirect('student:dtr_list')
+        
+        # Require login confirmation before allowing logout
+        if not self.object.is_login_confirmed():
+            if self.object.is_login_pending():
+                messages.error(
+                    request, 
+                    "Cannot log out yet. Your login must be confirmed by your supervisor first."
+                )
+            else:
+                messages.error(
+                    request, 
+                    "Cannot log out. Your login was rejected. Please check and resubmit."
+                )
+            return redirect('student:dtr_list')
+        
         return super().post(request, *args, **kwargs)
     
     def form_valid(self, form):
-        """Handle log-out with selfie processing and success message."""
+        """Handle log-out with selfie processing. Sets logout_confirmation_status to pending."""
         try:
             # Process logout selfie from base64 data
             selfie_data = form.cleaned_data.get('selfie_data') or self.request.POST.get('selfie_data')
@@ -351,8 +435,17 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
                 messages.error(self.request, "Please capture a selfie before logging out.")
                 return self.form_invalid(form)
             
+            # Set logout confirmation status to pending (requires supervisor approval)
+            form.instance.logout_confirmation_status = 'pending'
+            # Keep overall status as pending until both are confirmed
+            form.instance.confirmation_status = 'pending'
+            
             response = super().form_valid(form)
-            messages.success(self.request, f"Logged out successfully! Total hours: {self.object.get_hours_rendered()}")
+            messages.success(
+                self.request, 
+                f"Logged out successfully! Total hours: {self.object.get_hours_rendered()}. "
+                "Your logout is pending supervisor confirmation."
+            )
             return response
         except OJTValidationError as e:
             messages.error(self.request, str(e))
@@ -471,12 +564,22 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
         dtr_id = self.kwargs.get('pk')
         dtr = get_object_or_404(DTRLog, pk=dtr_id, student=self.request.user)
         
-        # Only allow resubmission of rejected DTRs
-        if dtr.confirmation_status != 'rejected':
+        # Only allow resubmission of rejected DTRs (check both login and logout rejection)
+        is_login_rejected = dtr.login_confirmation_status == 'rejected'
+        is_logout_rejected = dtr.logout_confirmation_status == 'rejected'
+        
+        if not is_login_rejected and not is_logout_rejected:
             messages.error(self.request, "Only rejected DTRs can be resubmitted.")
             return redirect('student:dtr_list')
         
         context['rejected_dtr'] = dtr
+        context['is_login_rejected'] = is_login_rejected
+        context['is_logout_rejected'] = is_logout_rejected
+        
+        # Determine which fields need to be resubmitted
+        context['needs_login_resubmit'] = is_login_rejected
+        context['needs_logout_resubmit'] = is_logout_rejected and dtr.time_out
+        
         return context
     
     def post(self, request, *args, **kwargs):
@@ -488,7 +591,10 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
         rejected_dtr = get_object_or_404(DTRLog, pk=dtr_id, student=request.user)
         
         # Verify it's rejected
-        if rejected_dtr.confirmation_status != 'rejected':
+        is_login_rejected = rejected_dtr.login_confirmation_status == 'rejected'
+        is_logout_rejected = rejected_dtr.logout_confirmation_status == 'rejected'
+        
+        if not is_login_rejected and not is_logout_rejected:
             messages.error(request, "Only rejected DTRs can be resubmitted.")
             return redirect('student:dtr_list')
         
@@ -508,43 +614,83 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
             time_in = datetime.strptime(time_in_str, '%H:%M').time() if time_in_str else rejected_dtr.time_in
             time_out = datetime.strptime(time_out_str, '%H:%M').time() if time_out_str else rejected_dtr.time_out
             
-            # Process selfie uploads - NEW photos are required for resubmission
+            # Process selfie uploads
             selfie = None
             logout_selfie = None
             
-            # Login selfie - REQUIRED for resubmission
-            if selfie_data and selfie_data.startswith('data:image'):
-                selfie = FileHandler.save_base64_image(selfie_data, 'selfie')
+            # Determine what status to use based on what was rejected
+            new_login_status = 'pending'
+            new_logout_status = None  # Will be None if no time_out
+            
+            # If login was rejected, require new login photo
+            if is_login_rejected:
+                if selfie_data and selfie_data.startswith('data:image'):
+                    selfie = FileHandler.save_base64_image(selfie_data, 'selfie')
+                else:
+                    messages.error(request, "Please capture a new login photo for your resubmission.")
+                    return redirect('student:dtr_resubmit', pk=rejected_dtr.pk)
             else:
-                # No new photo captured - show error
-                messages.error(request, "Please capture a new login photo for your resubmission.")
-                return redirect('student:dtr_resubmit', pk=rejected_dtr.pk)
+                # Login was confirmed, keep the old selfie
+                selfie = rejected_dtr.selfie
+                new_login_status = 'confirmed'  # Keep confirmed status
             
-            # Logout selfie - optional but use new one if captured
-            if logout_selfie_data and logout_selfie_data.startswith('data:image'):
-                logout_selfie = FileHandler.save_base64_image(logout_selfie_data, 'logout_selfie')
-            elif rejected_dtr.logout_selfie:
-                # Keep the old logout selfie if no new one captured
-                logout_selfie = rejected_dtr.logout_selfie
+            # Handle logout if there was a time_out
+            if rejected_dtr.time_out:
+                if is_logout_rejected:
+                    # Logout was rejected, check for new photo
+                    if logout_selfie_data and logout_selfie_data.startswith('data:image'):
+                        logout_selfie = FileHandler.save_base64_image(logout_selfie_data, 'logout_selfie')
+                        new_logout_status = 'pending'
+                    elif rejected_dtr.logout_selfie:
+                        logout_selfie = rejected_dtr.logout_selfie
+                        new_logout_status = 'pending'
+                    else:
+                        new_logout_status = 'pending'
+                else:
+                    # Logout was confirmed, keep the old logout selfie
+                    logout_selfie = rejected_dtr.logout_selfie
+                    new_logout_status = 'confirmed'  # Keep confirmed status
             
-            # Create new DTR entry with pending status (marked as resubmission)
+            # Create new DTR entry with appropriate statuses
             new_dtr = DTRLog.objects.create(
                 student=request.user,
                 date=rejected_dtr.date,
                 time_in=time_in,
-                time_out=time_out,
+                time_out=time_out if rejected_dtr.time_out else None,
                 selfie=selfie,
                 logout_selfie=logout_selfie,
                 notes=notes,
                 confirmation_status='pending',
-                is_resubmission=True,  # Mark as resubmission for supervisor review
-                is_valid=True  # Reset validity for new submission
+                login_confirmation_status=new_login_status,
+                logout_confirmation_status=new_logout_status,
+                is_resubmission=True,
+                is_valid=True
             )
+            
+            # Copy confirmed_by info if login was already confirmed
+            if not is_login_rejected and rejected_dtr.login_confirmed_by:
+                new_dtr.login_confirmed_by = rejected_dtr.login_confirmed_by
+                new_dtr.login_confirmed_at = rejected_dtr.login_confirmed_at
+                new_dtr.save()
+            
+            # Copy logout confirmed_by info if logout was already confirmed
+            if rejected_dtr.time_out and not is_logout_rejected and rejected_dtr.logout_confirmed_by:
+                new_dtr.logout_confirmed_by = rejected_dtr.logout_confirmed_by
+                new_dtr.logout_confirmed_at = rejected_dtr.logout_confirmed_at
+                new_dtr.save()
             
             # Delete the old rejected DTR
             rejected_dtr.delete()
             
-            messages.success(request, f"DTR for {rejected_dtr.date} has been resubmitted with new photo! It is now pending supervisor verification.")
+            # Determine success message based on what was rejected
+            if is_login_rejected and is_logout_rejected:
+                msg = f"DTR for {new_dtr.date} has been resubmitted! Both login and logout are pending supervisor verification."
+            elif is_login_rejected:
+                msg = f"DTR for {new_dtr.date} has been resubmitted! Login is pending supervisor verification."
+            else:
+                msg = f"DTR for {new_dtr.date} has been resubmitted! Logout is pending supervisor verification."
+            
+            messages.success(request, msg)
             return redirect('student:dtr_list')
             
         except Exception as e:

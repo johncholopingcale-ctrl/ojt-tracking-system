@@ -30,7 +30,7 @@
     </div>
 </div>
 
-<!-- Stats Card -->
+<!-- Stats Cards Row -->
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4 fade-up delay-1">
         <div class="stat-card">
@@ -38,6 +38,24 @@
             <div>
                 <div class="stat-num">{{ total_hours|floatformat:1 }}</div>
                 <div class="stat-label">Total Hours Rendered</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4 fade-up delay-1">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#fff3cd;color:#856404;"><i class="bi bi-hourglass-top"></i></div>
+            <div>
+                <div class="stat-num" style="color:#856404;">{{ pending_login_count|default:0 }}</div>
+                <div class="stat-label">Pending Login Confirmations</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4 fade-up delay-1">
+        <div class="stat-card">
+            <div class="stat-icon gold"><i class="bi bi-hourglass-bottom"></i></div>
+            <div>
+                <div class="stat-num">{{ pending_logout_count|default:0 }}</div>
+                <div class="stat-label">Pending Logout Confirmations</div>
             </div>
         </div>
     </div>
@@ -51,73 +69,104 @@
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Login Photo</th>
-                    <th>Logout Photo</th>
-                    <th>Time In</th>
-                    <th>Time Out</th>
+                    <th>Login</th>
+                    <th>Logout</th>
                     <th>Hours</th>
-                    <th>Status</th>
+                    <th>Login Status</th>
+                    <th>Logout Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for log in dtr_logs %}
-                <tr>
+                <tr style="{% if log.login_confirmation_status == 'rejected' or log.logout_confirmation_status == 'rejected' %}background:#fff5f5;{% endif %}">
                     <td>
                         <div style="font-weight:600;">{{ log.date|date:"M d, Y" }}</div>
                         <div style="font-size:11px;color:#aaa;">{{ log.date|date:"l" }}</div>
-                    </td>
-                    <td>
-                        {% if log.selfie %}
-                        <img src="{{ log.selfie.url }}" alt="Login Selfie" style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;" onclick="window.open('{{ log.selfie.url }}', '_blank')" title="Click to view full size">
-                        {% else %}
-                        <span class="status-badge status-pending">No photo</span>
+                        {% if log.is_resubmission %}
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:9px;margin-top:4px;">
+                            <i class="bi bi-arrow-clockwise"></i> Resubmitted
+                        </span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if log.logout_selfie %}
-                        <img src="{{ log.logout_selfie.url }}" alt="Logout Selfie" style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;" onclick="window.open('{{ log.logout_selfie.url }}', '_blank')" title="Click to view full size">
-                        {% elif log.time_out %}
-                        <span class="status-badge" style="background:#fff3cd;color:#856404;">No photo</span>
-                        {% else %}
-                        <span class="status-badge status-pending">Not logged out</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div style="font-weight:600;color:var(--green-main);">
-                            <i class="bi bi-box-arrow-in-right me-1"></i>{{ log.get_time_in_formatted }}
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            {% if log.selfie %}
+                            <img src="{{ log.selfie.url }}" alt="Login Selfie" style="width:36px;height:36px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid {% if log.login_confirmation_status == 'confirmed' %}#28a745{% elif log.login_confirmation_status == 'rejected' %}#dc3545{% else %}#ffc107{% endif %};" onclick="window.open('{{ log.selfie.url }}', '_blank')" title="Click to view full size">
+                            {% else %}
+                            <div style="width:36px;height:36px;border-radius:8px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-person" style="color:#ccc;"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:var(--green-main);">{{ log.get_time_in_formatted }}</div>
+                            </div>
                         </div>
                     </td>
                     <td>
                         {% if log.time_out %}
-                        <div style="font-weight:600;color:var(--gold);">
-                            <i class="bi bi-box-arrow-right me-1"></i>{{ log.get_time_out_formatted }}
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            {% if log.logout_selfie %}
+                            <img src="{{ log.logout_selfie.url }}" alt="Logout Selfie" style="width:36px;height:36px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid {% if log.logout_confirmation_status == 'confirmed' %}#28a745{% elif log.logout_confirmation_status == 'rejected' %}#dc3545{% else %}#ffc107{% endif %};" onclick="window.open('{{ log.logout_selfie.url }}', '_blank')" title="Click to view full size">
+                            {% else %}
+                            <div style="width:36px;height:36px;border-radius:8px;background:#fff3cd;display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-person" style="color:#856404;"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:var(--gold);">{{ log.get_time_out_formatted }}</div>
+                            </div>
                         </div>
                         {% else %}
-                        <span class="status-badge status-pending">Not logged out</span>
+                        <span style="font-size:12px;color:#888;">
+                            {% if log.login_confirmation_status == 'confirmed' %}
+                            <i class="bi bi-clock"></i> Waiting...
+                            {% else %}
+                            <i class="bi bi-lock"></i> Locked
+                            {% endif %}
+                        </span>
                         {% endif %}
                     </td>
                     <td>
-                        <span style="font-weight:700;color:var(--green-main);">{{ log.hours_rendered|floatformat:1 }} hrs</span>
+                        <span style="font-weight:700;color:var(--green-main);">{{ log.hours_rendered|floatformat:1 }}</span>
+                        <span style="font-size:11px;color:#888;">hrs</span>
                     </td>
                     <td>
-                        {% if log.confirmation_status == 'pending' %}
-                        <span class="status-badge" style="background:#fff3cd;color:#856404;" title="Awaiting supervisor confirmation">
+                        {% if log.login_confirmation_status == 'pending' %}
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:11px;">
                             <i class="bi bi-hourglass-split"></i> Pending
                         </span>
-                        {% elif log.confirmation_status == 'confirmed' %}
-                        <span class="status-badge" style="background:#d4edda;color:#155724;" title="Confirmed by {{ log.confirmed_by.get_full_name }}">
+                        {% elif log.login_confirmation_status == 'confirmed' %}
+                        <span class="status-badge" style="background:#d4edda;color:#155724;font-size:11px;">
                             <i class="bi bi-check-circle"></i> Confirmed
                         </span>
                         {% else %}
-                        <span class="status-badge" style="background:#f8d7da;color:#721c24;">
+                        <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:11px;">
                             <i class="bi bi-x-circle"></i> Rejected
                         </span>
-                        {% if not log.is_valid %}
-                        <div style="font-size:10px;color:#dc3545;margin-top:2px;">
-                            <i class="bi bi-exclamation-triangle-fill"></i> Not Logged In
-                        </div>
                         {% endif %}
+                    </td>
+                    <td>
+                        {% if not log.time_out %}
+                        <span style="font-size:11px;color:#888;">
+                            {% if log.login_confirmation_status == 'confirmed' %}
+                            <i class="bi bi-arrow-right-circle"></i> Ready
+                            {% else %}
+                            <i class="bi bi-lock-fill"></i> Locked
+                            {% endif %}
+                        </span>
+                        {% elif log.logout_confirmation_status == 'pending' %}
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:11px;">
+                            <i class="bi bi-hourglass-split"></i> Pending
+                        </span>
+                        {% elif log.logout_confirmation_status == 'confirmed' %}
+                        <span class="status-badge" style="background:#d4edda;color:#155724;font-size:11px;">
+                            <i class="bi bi-check-circle"></i> Confirmed
+                        </span>
+                        {% else %}
+                        <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:11px;">
+                            <i class="bi bi-x-circle"></i> Rejected
+                        </span>
                         {% endif %}
                     </td>
                     <td>
@@ -128,7 +177,7 @@
                                 <i class="bi bi-eye-fill"></i>
                             </button>
                             
-                            {% if log.confirmation_status == 'rejected' %}
+                            {% if log.login_confirmation_status == 'rejected' or log.logout_confirmation_status == 'rejected' %}
                             <!-- View Rejection Reason Button -->
                             <button type="button" class="icon-btn" style="background:#dc3545;" 
                                     data-bs-toggle="modal" data-bs-target="#rejectionModal{{ log.pk }}" title="View Rejection Reason">
@@ -138,16 +187,23 @@
                             <a href="{% url 'student:dtr_resubmit' log.pk %}" class="icon-btn" style="background:#ffc107;" title="Resubmit">
                                 <i class="bi bi-arrow-clockwise"></i>
                             </a>
-                            {% elif log.confirmation_status != 'confirmed' %}
-                            <!-- Edit/Delete for Pending DTRs -->
+                            {% elif log.login_confirmation_status == 'pending' %}
+                            <!-- Edit/Delete for Pending Logins -->
                             <a href="{% url 'student:dtr_edit' log.pk %}" class="icon-btn edit" title="Edit">
                                 <i class="bi bi-pencil-fill"></i>
                             </a>
                             <a href="{% url 'student:dtr_delete' log.pk %}" class="icon-btn delete" title="Delete">
                                 <i class="bi bi-trash3-fill"></i>
                             </a>
+                            {% elif log.login_confirmation_status == 'confirmed' and not log.time_out %}
+                            <!-- Log Out button if login confirmed but not logged out -->
+                            <a href="{% url 'student:dtr_log_out' %}" class="icon-btn" style="background:var(--gold);" title="Log Out Now">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </a>
+                            {% elif log.login_confirmation_status == 'confirmed' and log.logout_confirmation_status == 'confirmed' %}
+                            <span style="font-size:10px;color:#28a745;"><i class="bi bi-check-all"></i> Complete</span>
                             {% else %}
-                            <span style="font-size:11px;color:#888;">Locked</span>
+                            <span style="font-size:10px;color:#888;">Awaiting</span>
                             {% endif %}
                         </div>
                     </td>
@@ -257,39 +313,70 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="color:#888;"><i class="bi bi-clipboard-check me-2"></i>Confirmation</td>
+                                <td style="color:#888;"><i class="bi bi-box-arrow-in-right me-2 text-success"></i>Login Status</td>
                                 <td>
-                                    {% if log.confirmation_status == 'pending' %}
-                                    <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:13px;">
+                                    {% if log.login_confirmation_status == 'pending' %}
+                                    <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:12px;">
                                         <i class="bi bi-hourglass-split"></i> Pending
                                     </span>
-                                    {% elif log.confirmation_status == 'confirmed' %}
-                                    <span class="status-badge" style="background:#d4edda;color:#155724;font-size:13px;">
+                                    {% elif log.login_confirmation_status == 'confirmed' %}
+                                    <span class="status-badge" style="background:#d4edda;color:#155724;font-size:12px;">
                                         <i class="bi bi-check-circle"></i> Confirmed
                                     </span>
-                                    <div style="font-size:11px;color:#888;margin-top:4px;">
-                                        By: {{ log.confirmed_by.get_full_name }}<br>
-                                        On: {{ log.confirmed_at|date:"M d, Y g:i A" }}
+                                    {% if log.login_confirmed_by %}
+                                    <div style="font-size:10px;color:#888;margin-top:2px;">
+                                        by {{ log.login_confirmed_by.get_full_name }}
                                     </div>
-                                    {% elif log.confirmation_status == 'rejected' %}
-                                    <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:13px;">
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:12px;">
                                         <i class="bi bi-x-circle"></i> Rejected
                                     </span>
-                                    <div style="font-size:11px;color:#888;margin-top:4px;">
-                                        By: {{ log.confirmed_by.get_full_name }}<br>
-                                        On: {{ log.confirmed_at|date:"M d, Y g:i A" }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="color:#888;"><i class="bi bi-box-arrow-right me-2 text-warning"></i>Logout Status</td>
+                                <td>
+                                    {% if not log.time_out %}
+                                    <span style="font-size:12px;color:#888;">Not logged out</span>
+                                    {% elif log.logout_confirmation_status == 'pending' %}
+                                    <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:12px;">
+                                        <i class="bi bi-hourglass-split"></i> Pending
+                                    </span>
+                                    {% elif log.logout_confirmation_status == 'confirmed' %}
+                                    <span class="status-badge" style="background:#d4edda;color:#155724;font-size:12px;">
+                                        <i class="bi bi-check-circle"></i> Confirmed
+                                    </span>
+                                    {% if log.logout_confirmed_by %}
+                                    <div style="font-size:10px;color:#888;margin-top:2px;">
+                                        by {{ log.logout_confirmed_by.get_full_name }}
                                     </div>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:12px;">
+                                        <i class="bi bi-x-circle"></i> Rejected
+                                    </span>
                                     {% endif %}
                                 </td>
                             </tr>
                         </table>
                         
-                        {% if log.confirmation_status == 'rejected' and log.confirmation_remarks %}
+                        {% if log.login_confirmation_status == 'rejected' and log.login_remarks %}
                         <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:8px;padding:14px;margin-top:12px;">
                             <div style="font-size:12px;font-weight:600;color:#856404;margin-bottom:6px;">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Rejection Reason
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Login Rejection Reason
                             </div>
-                            <div style="font-size:13px;color:#856404;">{{ log.confirmation_remarks }}</div>
+                            <div style="font-size:13px;color:#856404;">{{ log.login_remarks }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if log.logout_confirmation_status == 'rejected' and log.logout_remarks %}
+                        <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:8px;padding:14px;margin-top:12px;">
+                            <div style="font-size:12px;font-weight:600;color:#856404;margin-bottom:6px;">
+                                <i class="bi bi-box-arrow-right me-1"></i>Logout Rejection Reason
+                            </div>
+                            <div style="font-size:13px;color:#856404;">{{ log.logout_remarks }}</div>
                         </div>
                         {% endif %}
                         
@@ -310,7 +397,7 @@
                 </div>
             </div>
             <div class="modal-footer" style="border:none;padding:12px 24px;">
-                {% if log.confirmation_status == 'rejected' %}
+                {% if log.login_confirmation_status == 'rejected' or log.logout_confirmation_status == 'rejected' %}
                 <a href="{% url 'student:dtr_resubmit' log.pk %}" class="btn btn-warning" style="border-radius:10px;">
                     <i class="bi bi-arrow-clockwise me-1"></i>Resubmit
                 </a>
@@ -324,7 +411,7 @@
 
 <!-- Rejection Reason Modals -->
 {% for log in dtr_logs %}
-{% if log.confirmation_status == 'rejected' %}
+{% if log.login_confirmation_status == 'rejected' or log.logout_confirmation_status == 'rejected' %}
 <div class="modal fade" id="rejectionModal{{ log.pk }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:16px;overflow:hidden;">
@@ -333,32 +420,51 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding:24px;">
-                <!-- Rejection Alert -->
-                <div style="background:#f8d7da;border-left:4px solid #dc3545;border-radius:8px;padding:16px;margin-bottom:20px;">
+                <!-- Login Rejection Section -->
+                {% if log.login_confirmation_status == 'rejected' %}
+                <div style="background:#f8d7da;border-left:4px solid #dc3545;border-radius:8px;padding:16px;margin-bottom:16px;">
                     <div style="font-size:14px;font-weight:600;color:#721c24;margin-bottom:8px;">
-                        <i class="bi bi-x-circle-fill me-2"></i>This DTR was rejected
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login Rejected
                     </div>
-                    {% if not log.is_valid %}
-                    <div style="font-size:13px;color:#721c24;margin-bottom:8px;">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        <strong>Time-in flagged as NOT LOGGED IN</strong>
+                    {% if log.login_confirmed_by %}
+                    <div style="font-size:12px;color:#721c24;margin-bottom:8px;">
+                        Rejected by: <strong>{{ log.login_confirmed_by.get_full_name }}</strong><br>
+                        On: <strong>{{ log.login_confirmed_at|date:"M d, Y g:i A" }}</strong>
                     </div>
                     {% endif %}
-                    <div style="font-size:12px;color:#721c24;">
-                        Rejected by: <strong>{{ log.confirmed_by.get_full_name }}</strong><br>
-                        On: <strong>{{ log.confirmed_at|date:"M d, Y g:i A" }}</strong>
+                    {% if log.login_remarks %}
+                    <div style="background:#fff3cd;border-radius:6px;padding:12px;margin-top:8px;">
+                        <div style="font-size:12px;font-weight:600;color:#856404;margin-bottom:4px;">
+                            <i class="bi bi-chat-square-text me-1"></i>Reason:
+                        </div>
+                        <div style="font-size:13px;color:#856404;">{{ log.login_remarks }}</div>
                     </div>
+                    {% endif %}
                 </div>
+                {% endif %}
                 
-                <!-- Rejection Reason -->
-                <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:8px;padding:16px;margin-bottom:20px;">
-                    <div style="font-size:13px;font-weight:600;color:#856404;margin-bottom:8px;">
-                        <i class="bi bi-chat-square-text me-1"></i>Supervisor's Comments:
+                <!-- Logout Rejection Section -->
+                {% if log.logout_confirmation_status == 'rejected' %}
+                <div style="background:#f8d7da;border-left:4px solid #dc3545;border-radius:8px;padding:16px;margin-bottom:16px;">
+                    <div style="font-size:14px;font-weight:600;color:#721c24;margin-bottom:8px;">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout Rejected
                     </div>
-                    <div style="font-size:14px;color:#856404;line-height:1.6;">
-                        {{ log.confirmation_remarks|default:"No specific reason provided." }}
+                    {% if log.logout_confirmed_by %}
+                    <div style="font-size:12px;color:#721c24;margin-bottom:8px;">
+                        Rejected by: <strong>{{ log.logout_confirmed_by.get_full_name }}</strong><br>
+                        On: <strong>{{ log.logout_confirmed_at|date:"M d, Y g:i A" }}</strong>
                     </div>
+                    {% endif %}
+                    {% if log.logout_remarks %}
+                    <div style="background:#fff3cd;border-radius:6px;padding:12px;margin-top:8px;">
+                        <div style="font-size:12px;font-weight:600;color:#856404;margin-bottom:4px;">
+                            <i class="bi bi-chat-square-text me-1"></i>Reason:
+                        </div>
+                        <div style="font-size:13px;color:#856404;">{{ log.logout_remarks }}</div>
+                    </div>
+                    {% endif %}
                 </div>
+                {% endif %}
                 
                 <!-- DTR Details Summary -->
                 <div style="background:#f8f9fa;border-radius:10px;padding:16px;">

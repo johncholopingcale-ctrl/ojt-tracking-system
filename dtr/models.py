@@ -105,11 +105,12 @@ class DTRLog(models.Model):
         ('rejected', 'Rejected'),
     )
 
+    # Legacy overall confirmation status (kept for backward compatibility)
     confirmation_status = models.CharField(
         max_length=20,
         choices=CONFIRMATION_STATUS,
         default='pending',
-        help_text="Supervisor confirmation status for this DTR log"
+        help_text="Overall supervisor confirmation status for this DTR log"
     )
 
     confirmed_by = models.ForeignKey(
@@ -131,6 +132,64 @@ class DTRLog(models.Model):
     confirmation_remarks = models.TextField(
         blank=True,
         help_text="Supervisor's remarks for confirmation/rejection"
+    )
+
+    # NEW: Separate login confirmation fields
+    login_confirmation_status = models.CharField(
+        max_length=20,
+        choices=CONFIRMATION_STATUS,
+        default='pending',
+        help_text="Supervisor confirmation status for login (time_in)"
+    )
+
+    login_confirmed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='login_confirmed_dtr_logs',
+        limit_choices_to={'role': 'supervisor'},
+        help_text="Supervisor who confirmed/rejected the login"
+    )
+
+    login_confirmed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the login was confirmed/rejected"
+    )
+
+    login_remarks = models.TextField(
+        blank=True,
+        help_text="Supervisor's remarks for login confirmation/rejection"
+    )
+
+    # NEW: Separate logout confirmation fields
+    logout_confirmation_status = models.CharField(
+        max_length=20,
+        choices=CONFIRMATION_STATUS,
+        default='pending',
+        help_text="Supervisor confirmation status for logout (time_out)"
+    )
+
+    logout_confirmed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='logout_confirmed_dtr_logs',
+        limit_choices_to={'role': 'supervisor'},
+        help_text="Supervisor who confirmed/rejected the logout"
+    )
+
+    logout_confirmed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the logout was confirmed/rejected"
+    )
+
+    logout_remarks = models.TextField(
+        blank=True,
+        help_text="Supervisor's remarks for logout confirmation/rejection"
     )
 
     is_valid = models.BooleanField(
@@ -263,6 +322,58 @@ class DTRLog(models.Model):
     def is_rejected(self):
         """Check if this DTR log was rejected by supervisor."""
         return self.confirmation_status == 'rejected'
+
+    # NEW: Login confirmation helper methods
+    def is_login_confirmed(self):
+        """Check if login has been confirmed by supervisor."""
+        return self.login_confirmation_status == 'confirmed'
+
+    def is_login_pending(self):
+        """Check if login is pending supervisor confirmation."""
+        return self.login_confirmation_status == 'pending'
+
+    def is_login_rejected(self):
+        """Check if login was rejected by supervisor."""
+        return self.login_confirmation_status == 'rejected'
+
+    # NEW: Logout confirmation helper methods
+    def is_logout_confirmed(self):
+        """Check if logout has been confirmed by supervisor."""
+        return self.logout_confirmation_status == 'confirmed'
+
+    def is_logout_pending(self):
+        """Check if logout is pending supervisor confirmation."""
+        return self.logout_confirmation_status == 'pending'
+
+    def is_logout_rejected(self):
+        """Check if logout was rejected by supervisor."""
+        return self.logout_confirmation_status == 'rejected'
+
+    def can_logout(self):
+        """Check if student can log out (login must be confirmed first)."""
+        return self.is_login_confirmed() and self.time_out is None
+
+    def is_fully_confirmed(self):
+        """Check if both login and logout are confirmed."""
+        return self.is_login_confirmed() and self.is_logout_confirmed()
+
+    def get_login_status_display_label(self):
+        """Get styled display label for login confirmation status."""
+        status_labels = {
+            'pending': '⏳ Pending',
+            'confirmed': '✅ Confirmed',
+            'rejected': '❌ Rejected',
+        }
+        return status_labels.get(self.login_confirmation_status, self.get_login_confirmation_status_display())
+
+    def get_logout_status_display_label(self):
+        """Get styled display label for logout confirmation status."""
+        status_labels = {
+            'pending': '⏳ Pending',
+            'confirmed': '✅ Confirmed',
+            'rejected': '❌ Rejected',
+        }
+        return status_labels.get(self.logout_confirmation_status, self.get_logout_confirmation_status_display())
 
     def get_confirmation_status_display_label(self):
         """Get styled display label for confirmation status."""

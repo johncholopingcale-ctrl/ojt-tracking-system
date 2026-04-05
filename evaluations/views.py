@@ -34,6 +34,7 @@ class SupervisorDashboardView(SupervisorRequiredMixin, TemplateView):
     OOP Concept: DASHBOARD WITH COMPUTED DATA
     ----------------------------------------
     Aggregates data from multiple sources.
+    Shows separate counts for pending logins and logouts.
     """
 
     template_name = 'supervisor/dashboard.html'
@@ -54,13 +55,33 @@ class SupervisorDashboardView(SupervisorRequiredMixin, TemplateView):
         evaluations = Evaluation.objects.filter(supervisor=supervisor)
         context['evaluation_count'] = evaluations.count()
 
-        # Get pending DTR confirmations count
+        # Get student IDs for filtering
         student_ids = assignments.values_list('student_id', flat=True)
-        pending_dtr_count = DTRLog.objects.filter(
+        
+        # NEW: Separate counts for login and logout confirmations
+        pending_login_count = DTRLog.objects.filter(
             student_id__in=student_ids,
-            confirmation_status='pending'
+            login_confirmation_status='pending'
         ).count()
-        context['pending_dtr_count'] = pending_dtr_count
+        context['pending_login_count'] = pending_login_count
+        
+        pending_logout_count = DTRLog.objects.filter(
+            student_id__in=student_ids,
+            time_out__isnull=False,  # Only count if they've actually logged out
+            logout_confirmation_status='pending'
+        ).count()
+        context['pending_logout_count'] = pending_logout_count
+        
+        # Total pending (for backward compatibility)
+        context['pending_dtr_count'] = pending_login_count + pending_logout_count
+
+        # Get resubmitted DTR count (pending resubmissions needing review)
+        resubmitted_dtr_count = DTRLog.objects.filter(
+            student_id__in=student_ids,
+            login_confirmation_status='pending',
+            is_resubmission=True
+        ).count()
+        context['resubmitted_dtr_count'] = resubmitted_dtr_count
 
         # Get list of interns with their hours
         interns_data = []
@@ -268,11 +289,12 @@ class EvaluationDeleteView(SupervisorRequiredMixin, DeleteView):
 
 class DTRConfirmationView(SupervisorRequiredMixin, TemplateView):
     """
-    View for supervisors to confirm or reject a DTR log.
+    View for supervisors to confirm or reject a DTR log's login or logout.
 
     OOP Concept: PERMISSION-CHECKED CONFIRMATION
     -------------------------------------------
     Verifies supervisor can confirm/reject this student's DTR.
+    Handles separate login and logout confirmation.
 
     CRUD Operation: UPDATE - Updating DTR confirmation status
     """
@@ -304,36 +326,73 @@ class DTRConfirmationView(SupervisorRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['dtr_log'] = self.dtr_log
         context['student'] = self.dtr_log.student
+        # Add confirmation type context
+        context['login_needs_confirm'] = self.dtr_log.is_login_pending()
+        context['logout_needs_confirm'] = self.dtr_log.time_out and self.dtr_log.is_logout_pending()
+        context['login_confirmed'] = self.dtr_log.is_login_confirmed()
+        context['logout_confirmed'] = self.dtr_log.is_logout_confirmed()
         return context
 
     def post(self, request, *args, **kwargs):
-        """Handle confirmation or rejection."""
+        """Handle confirmation or rejection for login or logout."""
         from django.utils import timezone
 
         remarks = request.POST.get('remarks', '')
         action = request.POST.get('action')
+        confirm_type = request.POST.get('confirm_type', 'login')  # 'login' or 'logout'
 
-        if action == 'confirm':
-            self.dtr_log.confirmation_status = 'confirmed'
-            self.dtr_log.confirmed_by = request.user
-            self.dtr_log.confirmed_at = timezone.now()
-            self.dtr_log.confirmation_remarks = remarks
-            self.dtr_log.is_valid = True  # Mark as valid when confirmed
-            self.dtr_log.save()
-            messages.success(request, f"DTR log for {self.dtr_log.date} has been confirmed.")
+        if confirm_type == 'login':
+            if action == 'confirm':
+                self.dtr_log.login_confirmation_status = 'confirmed'
+                self.dtr_log.login_confirmed_by = request.user
+                self.dtr_log.login_confirmed_at = timezone.now()
+                self.dtr_log.login_remarks = remarks
+                self.dtr_log.is_valid = True
+                self.dtr_log.save()
+                messages.success(request, f"Login for {self.dtr_log.date} has been confirmed. Student can now log out.")
 
-        elif action == 'reject':
-            if not remarks:
-                messages.error(request, "Please provide remarks when rejecting a DTR log.")
-                return self.get(request, *args, **kwargs)
+            elif action == 'reject':
+                if not remarks:
+                    messages.error(request, "Please provide remarks when rejecting a login.")
+                    return self.get(request, *args, **kwargs)
 
-            self.dtr_log.confirmation_status = 'rejected'
-            self.dtr_log.confirmed_by = request.user
-            self.dtr_log.confirmed_at = timezone.now()
-            self.dtr_log.confirmation_remarks = remarks
-            self.dtr_log.is_valid = False  # Mark as invalid when rejected - time_in flagged as not logged in
-            self.dtr_log.save()
-            messages.warning(request, f"DTR log for {self.dtr_log.date} has been rejected. Student can resubmit.")
+                self.dtr_log.login_confirmation_status = 'rejected'
+                self.dtr_log.login_confirmed_by = request.user
+                self.dtr_log.login_confirmed_at = timezone.now()
+                self.dtr_log.login_remarks = remarks
+                self.dtr_log.confirmation_status = 'rejected'  # Overall status
+                self.dtr_log.is_valid = False
+                self.dtr_log.save()
+                messages.warning(request, f"Login for {self.dtr_log.date} has been rejected. Student can resubmit.")
+
+        elif confirm_type == 'logout':
+            if action == 'confirm':
+                self.dtr_log.logout_confirmation_status = 'confirmed'
+                self.dtr_log.logout_confirmed_by = request.user
+                self.dtr_log.logout_confirmed_at = timezone.now()
+                self.dtr_log.logout_remarks = remarks
+                
+                # If both login and logout are confirmed, mark overall as confirmed
+                if self.dtr_log.is_login_confirmed():
+                    self.dtr_log.confirmation_status = 'confirmed'
+                    self.dtr_log.confirmed_by = request.user
+                    self.dtr_log.confirmed_at = timezone.now()
+                    self.dtr_log.confirmation_remarks = f"Login: {self.dtr_log.login_remarks or 'OK'}. Logout: {remarks or 'OK'}"
+                
+                self.dtr_log.save()
+                messages.success(request, f"Logout for {self.dtr_log.date} has been confirmed. DTR is now fully approved.")
+
+            elif action == 'reject':
+                if not remarks:
+                    messages.error(request, "Please provide remarks when rejecting a logout.")
+                    return self.get(request, *args, **kwargs)
+
+                self.dtr_log.logout_confirmation_status = 'rejected'
+                self.dtr_log.logout_confirmed_by = request.user
+                self.dtr_log.logout_confirmed_at = timezone.now()
+                self.dtr_log.logout_remarks = remarks
+                self.dtr_log.save()
+                messages.warning(request, f"Logout for {self.dtr_log.date} has been rejected.")
 
         return redirect('supervisor:intern_dtr', student_id=self.dtr_log.student.pk)
 
@@ -344,7 +403,7 @@ class PendingDTRListView(SupervisorRequiredMixin, ListView):
 
     OOP Concept: FILTERED LISTVIEW
     -----------------------------
-    Shows only pending confirmations for supervisor's interns.
+    Shows pending login and logout confirmations separately.
 
     CRUD Operation: READ
     """
@@ -355,19 +414,59 @@ class PendingDTRListView(SupervisorRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        """Get pending DTR logs for supervisor's interns."""
+        """Get pending DTR logs for supervisor's interns based on filter."""
+        from django.db.models import Q
+        
         supervisor = self.request.user
         companies = Company.objects.filter(supervisor=supervisor)
         student_ids = Assignment.objects.filter(
             company__in=companies
         ).values_list('student_id', flat=True)
 
-        return DTRLog.objects.filter(
-            student_id__in=student_ids,
-            confirmation_status='pending'
-        ).order_by('-date', '-created_at')
+        filter_type = self.request.GET.get('filter', 'all')
+        
+        base_query = DTRLog.objects.filter(student_id__in=student_ids)
+        
+        if filter_type == 'login':
+            # Pending login confirmations
+            return base_query.filter(
+                login_confirmation_status='pending'
+            ).order_by('-date', '-created_at')
+        elif filter_type == 'logout':
+            # Pending logout confirmations (only where they've actually logged out)
+            return base_query.filter(
+                time_out__isnull=False,
+                logout_confirmation_status='pending'
+            ).order_by('-date', '-created_at')
+        else:
+            # All pending (either login or logout pending)
+            return base_query.filter(
+                Q(login_confirmation_status='pending') |
+                Q(time_out__isnull=False, logout_confirmation_status='pending')
+            ).order_by('-date', '-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['pending_count'] = self.get_queryset().count()
+        
+        supervisor = self.request.user
+        companies = Company.objects.filter(supervisor=supervisor)
+        student_ids = Assignment.objects.filter(
+            company__in=companies
+        ).values_list('student_id', flat=True)
+        
+        # Separate counts for login and logout
+        context['pending_login_count'] = DTRLog.objects.filter(
+            student_id__in=student_ids,
+            login_confirmation_status='pending'
+        ).count()
+        
+        context['pending_logout_count'] = DTRLog.objects.filter(
+            student_id__in=student_ids,
+            time_out__isnull=False,
+            logout_confirmation_status='pending'
+        ).count()
+        
+        context['pending_count'] = context['pending_login_count'] + context['pending_logout_count']
+        context['current_filter'] = self.request.GET.get('filter', 'all')
+        
         return context

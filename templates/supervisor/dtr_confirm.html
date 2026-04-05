@@ -1,7 +1,7 @@
 {% extends 'supervisor/base_supervisor.html' %}
 
 {% block page_title %}{% if dtr_log.is_resubmission %}Verify Resubmitted DTR{% else %}Confirm DTR{% endif %}{% endblock %}
-{% block page_subtitle %}Review and confirm {{ student.get_full_name }}'s time log{% endblock %}
+{% block page_subtitle %}Review {{ student.get_full_name }}'s time log{% endblock %}
 
 {% block supervisor_content %}
 {% if dtr_log.is_resubmission %}
@@ -47,11 +47,28 @@
                     <label style="font-size:12px;color:#888;display:block;">Date</label>
                     <div style="font-size:18px;font-weight:700;color:var(--green-main);">{{ dtr_log.date|date:"F d, Y" }}</div>
                 </div>
-                <div class="row">
+                
+                <!-- Login Status -->
+                <div class="row mb-3">
                     <div class="col-6">
                         <label style="font-size:12px;color:#888;display:block;">Time In</label>
                         <div style="font-size:16px;font-weight:600;">
                             <i class="bi bi-box-arrow-in-right me-1 text-success"></i>{{ dtr_log.get_time_in_formatted }}
+                        </div>
+                        <div style="margin-top:4px;">
+                            {% if dtr_log.login_confirmation_status == 'confirmed' %}
+                            <span class="status-badge" style="background:#d4edda;color:#155724;font-size:11px;">
+                                <i class="bi bi-check-circle"></i> Login Confirmed
+                            </span>
+                            {% elif dtr_log.login_confirmation_status == 'rejected' %}
+                            <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:11px;">
+                                <i class="bi bi-x-circle"></i> Login Rejected
+                            </span>
+                            {% else %}
+                            <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:11px;">
+                                <i class="bi bi-hourglass-split"></i> Login Pending
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-6">
@@ -59,8 +76,33 @@
                         <div style="font-size:16px;font-weight:600;">
                             <i class="bi bi-box-arrow-right me-1 text-danger"></i>{{ dtr_log.get_time_out_formatted }}
                         </div>
+                        {% if dtr_log.time_out %}
+                        <div style="margin-top:4px;">
+                            {% if dtr_log.logout_confirmation_status == 'confirmed' %}
+                            <span class="status-badge" style="background:#d4edda;color:#155724;font-size:11px;">
+                                <i class="bi bi-check-circle"></i> Logout Confirmed
+                            </span>
+                            {% elif dtr_log.logout_confirmation_status == 'rejected' %}
+                            <span class="status-badge" style="background:#f8d7da;color:#721c24;font-size:11px;">
+                                <i class="bi bi-x-circle"></i> Logout Rejected
+                            </span>
+                            {% else %}
+                            <span class="status-badge" style="background:#fff3cd;color:#856404;font-size:11px;">
+                                <i class="bi bi-hourglass-split"></i> Logout Pending
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
+                
+                {% if dtr_log.time_out %}
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:12px;color:#888;display:block;">Hours Rendered</label>
+                    <div style="font-size:18px;font-weight:700;color:var(--gold);">{{ dtr_log.hours_rendered|floatformat:1 }} hours</div>
+                </div>
+                {% endif %}
+                
                 {% if dtr_log.notes %}
                 <div style="margin-top:16px;">
                     <label style="font-size:12px;color:#888;display:block;">Student Notes</label>
@@ -116,46 +158,93 @@
     </div>
 </div>
 
-<!-- Confirmation Form -->
-<div class="card-wrap fade-up delay-1">
-    <div class="card-header-custom">
-        <i class="bi bi-check-circle me-2"></i>Confirmation
+<!-- Login Confirmation Form -->
+{% if login_needs_confirm %}
+<div class="card-wrap fade-up delay-1 mb-4">
+    <div class="card-header-custom" style="background:#d4edda;color:#155724;">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Confirm Login
     </div>
     <div class="card-body-custom" style="padding:20px;">
-        {% if dtr_log.confirmation_status != 'pending' %}
-        <div class="alert {% if dtr_log.confirmation_status == 'confirmed' %}alert-success{% else %}alert-danger{% endif %}" style="border-radius:10px;">
-            <strong>
-                {% if dtr_log.confirmation_status == 'confirmed' %}
-                <i class="bi bi-check-circle-fill me-1"></i>Confirmed
-                {% else %}
-                <i class="bi bi-x-circle-fill me-1"></i>Rejected
-                {% endif %}
-            </strong>
-            by {{ dtr_log.confirmed_by.get_full_name }} on {{ dtr_log.confirmed_at|date:"M d, Y H:i" }}
-            {% if dtr_log.confirmation_remarks %}
-            <hr style="margin:10px 0;">
-            <p style="margin-bottom:0;"><strong>Remarks:</strong> {{ dtr_log.confirmation_remarks }}</p>
-            {% endif %}
-        </div>
-        {% else %}
         <form method="post">
             {% csrf_token %}
+            <input type="hidden" name="confirm_type" value="login">
             <div class="mb-3">
-                <label for="remarks" class="form-label">Remarks (required for rejection)</label>
-                <textarea name="remarks" id="remarks" class="form-control" rows="3" placeholder="Add any remarks or feedback for the student..."></textarea>
+                <label for="login_remarks" class="form-label">Remarks (required for rejection)</label>
+                <textarea name="remarks" id="login_remarks" class="form-control" rows="3" placeholder="Add remarks for the login confirmation..."></textarea>
             </div>
             <div style="display:flex;gap:12px;justify-content:flex-end;">
                 <button type="submit" name="action" value="reject" class="btn btn-outline-danger" style="padding:10px 24px;border-radius:10px;">
-                    <i class="bi bi-x-circle me-1"></i> Reject
+                    <i class="bi bi-x-circle me-1"></i> Reject Login
                 </button>
                 <button type="submit" name="action" value="confirm" class="btn btn-success" style="padding:10px 24px;border-radius:10px;">
-                    <i class="bi bi-check-circle me-1"></i> Confirm
+                    <i class="bi bi-check-circle me-1"></i> Confirm Login
                 </button>
             </div>
         </form>
-        {% endif %}
     </div>
 </div>
+{% elif login_confirmed %}
+<div class="alert alert-success fade-up mb-4" style="border-radius:12px;">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <strong>Login Confirmed</strong> by {{ dtr_log.login_confirmed_by.get_full_name }} on {{ dtr_log.login_confirmed_at|date:"M d, Y H:i" }}
+    {% if dtr_log.login_remarks %}
+    <div style="margin-top:8px;font-size:13px;"><strong>Remarks:</strong> {{ dtr_log.login_remarks }}</div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Logout Confirmation Form -->
+{% if logout_needs_confirm %}
+<div class="card-wrap fade-up delay-1">
+    <div class="card-header-custom" style="background:#fff3cd;color:#856404;">
+        <i class="bi bi-box-arrow-right me-2"></i>Confirm Logout
+    </div>
+    <div class="card-body-custom" style="padding:20px;">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="confirm_type" value="logout">
+            <div class="mb-3">
+                <label for="logout_remarks" class="form-label">Remarks (required for rejection)</label>
+                <textarea name="remarks" id="logout_remarks" class="form-control" rows="3" placeholder="Add remarks for the logout confirmation..."></textarea>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button type="submit" name="action" value="reject" class="btn btn-outline-danger" style="padding:10px 24px;border-radius:10px;">
+                    <i class="bi bi-x-circle me-1"></i> Reject Logout
+                </button>
+                <button type="submit" name="action" value="confirm" class="btn btn-warning" style="padding:10px 24px;border-radius:10px;">
+                    <i class="bi bi-check-circle me-1"></i> Confirm Logout
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% elif logout_confirmed %}
+<div class="alert alert-success fade-up mb-4" style="border-radius:12px;">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <strong>Logout Confirmed</strong> by {{ dtr_log.logout_confirmed_by.get_full_name }} on {{ dtr_log.logout_confirmed_at|date:"M d, Y H:i" }}
+    {% if dtr_log.logout_remarks %}
+    <div style="margin-top:8px;font-size:13px;"><strong>Remarks:</strong> {{ dtr_log.logout_remarks }}</div>
+    {% endif %}
+</div>
+{% elif not dtr_log.time_out %}
+<div class="alert alert-info fade-up mb-4" style="border-radius:12px;">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    Student has not logged out yet. Logout confirmation will be available after the student logs out.
+</div>
+{% endif %}
+
+<!-- All Confirmed Message -->
+{% if login_confirmed and logout_confirmed %}
+<div class="alert alert-success fade-up" style="border-radius:12px;background:linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <i class="bi bi-patch-check-fill" style="font-size:32px;color:#155724;"></i>
+        <div>
+            <div style="font-weight:700;color:#155724;font-size:16px;">DTR Fully Confirmed</div>
+            <div style="color:#155724;font-size:13px;">Both login and logout have been confirmed. This DTR entry is complete.</div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div style="margin-top:20px;">
     <a href="{% url 'supervisor:intern_dtr' student.pk %}" class="btn-gold" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;text-decoration:none;border-radius:10px;">

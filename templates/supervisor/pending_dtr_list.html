@@ -1,13 +1,49 @@
 {% extends 'supervisor/base_supervisor.html' %}
 
 {% block page_title %}Pending DTR Confirmations{% endblock %}
-{% block page_subtitle %}{{ pending_count }} DTR log{{ pending_count|pluralize }} awaiting your confirmation{% endblock %}
+{% block page_subtitle %}{{ pending_count }} DTR confirmation{{ pending_count|pluralize }} awaiting your review{% endblock %}
 
 {% block supervisor_content %}
+<!-- Filter Tabs -->
+<div class="card-wrap fade-up mb-4" style="padding:0;">
+    <div style="display:flex;border-bottom:1px solid #f0f0f0;">
+        <a href="{% url 'supervisor:pending_dtr' %}" 
+           class="{% if current_filter == 'all' %}active{% endif %}"
+           style="flex:1;padding:14px 20px;text-align:center;text-decoration:none;font-weight:600;
+                  color:{% if current_filter == 'all' %}var(--green-main){% else %}#666{% endif %};
+                  border-bottom:3px solid {% if current_filter == 'all' %}var(--green-main){% else %}transparent{% endif %};
+                  background:{% if current_filter == 'all' %}#f0fff4{% else %}transparent{% endif %};">
+            <i class="bi bi-list-check me-2"></i>All Pending
+            <span class="badge" style="background:{% if current_filter == 'all' %}var(--green-main){% else %}#6c757d{% endif %};color:#fff;margin-left:8px;">{{ pending_count }}</span>
+        </a>
+        <a href="{% url 'supervisor:pending_dtr' %}?filter=login" 
+           class="{% if current_filter == 'login' %}active{% endif %}"
+           style="flex:1;padding:14px 20px;text-align:center;text-decoration:none;font-weight:600;
+                  color:{% if current_filter == 'login' %}#155724{% else %}#666{% endif %};
+                  border-bottom:3px solid {% if current_filter == 'login' %}#28a745{% else %}transparent{% endif %};
+                  background:{% if current_filter == 'login' %}#d4edda{% else %}transparent{% endif %};">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Logins
+            <span class="badge" style="background:{% if current_filter == 'login' %}#28a745{% else %}#6c757d{% endif %};color:#fff;margin-left:8px;">{{ pending_login_count }}</span>
+        </a>
+        <a href="{% url 'supervisor:pending_dtr' %}?filter=logout" 
+           class="{% if current_filter == 'logout' %}active{% endif %}"
+           style="flex:1;padding:14px 20px;text-align:center;text-decoration:none;font-weight:600;
+                  color:{% if current_filter == 'logout' %}#856404{% else %}#666{% endif %};
+                  border-bottom:3px solid {% if current_filter == 'logout' %}#ffc107{% else %}transparent{% endif %};
+                  background:{% if current_filter == 'logout' %}#fff3cd{% else %}transparent{% endif %};">
+            <i class="bi bi-box-arrow-right me-2"></i>Logouts
+            <span class="badge" style="background:{% if current_filter == 'logout' %}#ffc107{% else %}#6c757d{% endif %};color:{% if current_filter == 'logout' %}#000{% else %}#fff{% endif %};margin-left:8px;">{{ pending_logout_count }}</span>
+        </a>
+    </div>
+</div>
+
 <!-- Pending DTR Logs Table -->
 <div class="card-wrap fade-up">
     <div class="card-header-custom">
-        <i class="bi bi-hourglass-split me-2"></i>Pending DTR Logs
+        <i class="bi bi-hourglass-split me-2"></i>
+        {% if current_filter == 'login' %}Pending Login Confirmations
+        {% elif current_filter == 'logout' %}Pending Logout Confirmations
+        {% else %}All Pending Confirmations{% endif %}
     </div>
     {% if dtr_logs %}
     <div class="table-responsive">
@@ -16,17 +52,18 @@
                 <tr>
                     <th>Student</th>
                     <th>Date</th>
-                    <th>Login Photo</th>
-                    <th>Logout Photo</th>
-                    <th>Time In</th>
-                    <th>Time Out</th>
-                    <th>Hours</th>
+                    <th>Type</th>
+                    <th>Photo</th>
+                    <th>Time</th>
+                    <th>Status</th>
                     <th style="width:120px;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for log in dtr_logs %}
-                <tr>
+                <!-- Login Row (if pending) -->
+                {% if log.login_confirmation_status == 'pending' and current_filter != 'logout' %}
+                <tr style="{% if log.is_resubmission %}background:#fffbeb;{% endif %}">
                     <td>
                         <div style="display:flex;align-items:center;gap:10px;">
                             {% if log.student.profile_pic %}
@@ -50,40 +87,86 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if log.selfie %}
-                        <img src="{{ log.selfie.url }}" alt="Login Selfie" 
-                             style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid {% if log.is_resubmission %}#ffc107{% else %}var(--green-main){% endif %};"
-                             onclick="window.open('{{ log.selfie.url }}', '_blank')" title="Click to view full size">
-                        {% else %}
-                        <span style="font-size:11px;color:#aaa;">-</span>
-                        {% endif %}
+                        <span class="status-badge" style="background:#d4edda;color:#155724;">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        </span>
                     </td>
                     <td>
-                        {% if log.logout_selfie %}
-                        <img src="{{ log.logout_selfie.url }}" alt="Logout Selfie" 
-                             style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid var(--gold);"
-                             onclick="window.open('{{ log.logout_selfie.url }}', '_blank')" title="Click to view full size">
-                        {% elif log.time_out %}
-                        <span style="font-size:11px;color:#ff9800;">No photo</span>
+                        {% if log.selfie %}
+                        <img src="{{ log.selfie.url }}" alt="Login Selfie" 
+                             style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #28a745;"
+                             onclick="window.open('{{ log.selfie.url }}', '_blank')" title="Click to view full size">
                         {% else %}
-                        <span style="font-size:11px;color:#aaa;">-</span>
+                        <span style="font-size:11px;color:#aaa;">No photo</span>
                         {% endif %}
                     </td>
                     <td style="font-size:13px;">
                         <i class="bi bi-box-arrow-in-right me-1 text-success"></i>{{ log.get_time_in_formatted }}
                     </td>
-                    <td style="font-size:13px;">
-                        <i class="bi bi-box-arrow-right me-1 text-danger"></i>{{ log.get_time_out_formatted }}
+                    <td>
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;">
+                            <i class="bi bi-hourglass-split"></i> Pending
+                        </span>
                     </td>
                     <td>
-                        <span class="status-badge status-completed">{{ log.hours_rendered|floatformat:1 }} hrs</span>
-                    </td>
-                    <td>
-                        <a href="{% url 'supervisor:dtr_confirm' log.pk %}" class="btn btn-sm {% if log.is_resubmission %}btn-warning{% else %}btn-outline-success{% endif %}" style="border-radius:8px;">
-                            <i class="bi bi-{% if log.is_resubmission %}arrow-clockwise{% else %}check-circle{% endif %}"></i> {% if log.is_resubmission %}Verify{% else %}Review{% endif %}
+                        <a href="{% url 'supervisor:dtr_confirm' log.pk %}?type=login" class="btn btn-sm {% if log.is_resubmission %}btn-warning{% else %}btn-success{% endif %}" style="border-radius:8px;">
+                            <i class="bi bi-{% if log.is_resubmission %}arrow-clockwise{% else %}check-circle{% endif %}"></i> 
+                            {% if log.is_resubmission %}Verify{% else %}Review{% endif %}
                         </a>
                     </td>
                 </tr>
+                {% endif %}
+                
+                <!-- Logout Row (if pending and logged out) -->
+                {% if log.time_out and log.logout_confirmation_status == 'pending' and current_filter != 'login' %}
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            {% if log.student.profile_pic %}
+                            <img src="{{ log.student.profile_pic.url }}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">
+                            {% else %}
+                            <div class="student-av" style="width:36px;height:36px;font-size:12px;">{{ log.student.get_initials }}</div>
+                            {% endif %}
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">{{ log.student.get_full_name }}</div>
+                                <div style="font-size:11px;color:#888;">{{ log.student.department|default:"No dept" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-weight:600;color:var(--gold);">{{ log.date|date:"M d" }}</span>
+                        <span style="font-size:11px;color:#888;display:block;">{{ log.date|date:"Y" }}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;">
+                            <i class="bi bi-box-arrow-right me-1"></i>Logout
+                        </span>
+                    </td>
+                    <td>
+                        {% if log.logout_selfie %}
+                        <img src="{{ log.logout_selfie.url }}" alt="Logout Selfie" 
+                             style="width:40px;height:40px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #ffc107;"
+                             onclick="window.open('{{ log.logout_selfie.url }}', '_blank')" title="Click to view full size">
+                        {% else %}
+                        <span style="font-size:11px;color:#ff9800;">No photo</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:13px;">
+                        <i class="bi bi-box-arrow-right me-1 text-warning"></i>{{ log.get_time_out_formatted }}
+                        <div style="font-size:10px;color:#888;">{{ log.hours_rendered|floatformat:1 }} hrs</div>
+                    </td>
+                    <td>
+                        <span class="status-badge" style="background:#fff3cd;color:#856404;">
+                            <i class="bi bi-hourglass-split"></i> Pending
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'supervisor:dtr_confirm' log.pk %}?type=logout" class="btn btn-sm btn-warning" style="border-radius:8px;">
+                            <i class="bi bi-check-circle"></i> Review
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
@@ -95,7 +178,7 @@
             <ul class="pagination pagination-sm mb-0">
                 {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" style="border-radius:8px 0 0 8px;">« Prev</a>
+                    <a class="page-link" href="?{% if current_filter != 'all' %}filter={{ current_filter }}&{% endif %}page={{ page_obj.previous_page_number }}" style="border-radius:8px 0 0 8px;">« Prev</a>
                 </li>
                 {% endif %}
                 <li class="page-item disabled">
@@ -105,7 +188,7 @@
                 </li>
                 {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" style="border-radius:0 8px 8px 0;">Next »</a>
+                    <a class="page-link" href="?{% if current_filter != 'all' %}filter={{ current_filter }}&{% endif %}page={{ page_obj.next_page_number }}" style="border-radius:0 8px 8px 0;">Next »</a>
                 </li>
                 {% endif %}
             </ul>
@@ -115,7 +198,11 @@
     {% else %}
     <div class="card-body-custom text-center py-5">
         <i class="bi bi-check-circle" style="font-size:48px;color:#28a745;"></i>
-        <p class="mt-3" style="color:#888;">All DTR logs have been reviewed. No pending confirmations!</p>
+        <p class="mt-3" style="color:#888;">
+            {% if current_filter == 'login' %}All logins have been confirmed!
+            {% elif current_filter == 'logout' %}All logouts have been confirmed!
+            {% else %}All DTR logs have been reviewed. No pending confirmations!{% endif %}
+        </p>
     </div>
     {% endif %}
 </div>
@@ -125,23 +212,4 @@
         <i class="bi bi-arrow-left"></i> Back to Dashboard
     </a>
 </div>
-
-<!-- Selfie Modals -->
-{% for log in dtr_logs %}
-{% if log.selfie %}
-<div class="modal fade" id="selfieModal{{ log.pk }}" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
-            <div class="modal-header" style="background:var(--green-main);color:#fff;border:none;">
-                <h6 class="modal-title"><i class="bi bi-camera me-2"></i>{{ log.student.get_full_name }} - {{ log.date|date:"F d, Y" }}</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0">
-                <img src="{{ log.selfie.url }}" alt="Selfie" style="width:100%;height:auto;">
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-{% endfor %}
 {% endblock %}

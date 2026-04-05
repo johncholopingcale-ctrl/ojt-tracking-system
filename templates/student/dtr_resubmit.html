@@ -10,19 +10,41 @@
     </div>
     <div class="card-body-custom" style="padding:24px;">
         <!-- Rejection Info -->
-        <div style="background:#f8d7da;border-left:4px solid #dc3545;border-radius:8px;padding:16px;margin-bottom:24px;">
+        {% if is_login_rejected %}
+        <div style="background:#f8d7da;border-left:4px solid #dc3545;border-radius:8px;padding:16px;margin-bottom:16px;">
             <div style="font-size:14px;font-weight:600;color:#721c24;margin-bottom:8px;">
-                <i class="bi bi-x-circle-fill me-2"></i>Previous Submission was Rejected
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login Rejected
             </div>
-            {% if rejected_dtr.confirmation_remarks %}
+            {% if rejected_dtr.login_remarks %}
             <div style="font-size:13px;color:#721c24;margin-bottom:6px;">
-                <strong>Reason:</strong> {{ rejected_dtr.confirmation_remarks }}
+                <strong>Reason:</strong> {{ rejected_dtr.login_remarks }}
             </div>
             {% endif %}
+            {% if rejected_dtr.login_confirmed_by %}
             <div style="font-size:12px;color:#721c24;">
-                Rejected by {{ rejected_dtr.confirmed_by.get_full_name }} on {{ rejected_dtr.confirmed_at|date:"M d, Y g:i A" }}
+                Rejected by {{ rejected_dtr.login_confirmed_by.get_full_name }} on {{ rejected_dtr.login_confirmed_at|date:"M d, Y g:i A" }}
             </div>
+            {% endif %}
         </div>
+        {% endif %}
+        
+        {% if is_logout_rejected %}
+        <div style="background:#f8d7da;border-left:4px solid #dc3545;border-radius:8px;padding:16px;margin-bottom:16px;">
+            <div style="font-size:14px;font-weight:600;color:#721c24;margin-bottom:8px;">
+                <i class="bi bi-box-arrow-right me-2"></i>Logout Rejected
+            </div>
+            {% if rejected_dtr.logout_remarks %}
+            <div style="font-size:13px;color:#721c24;margin-bottom:6px;">
+                <strong>Reason:</strong> {{ rejected_dtr.logout_remarks }}
+            </div>
+            {% endif %}
+            {% if rejected_dtr.logout_confirmed_by %}
+            <div style="font-size:12px;color:#721c24;">
+                Rejected by {{ rejected_dtr.logout_confirmed_by.get_full_name }} on {{ rejected_dtr.logout_confirmed_at|date:"M d, Y g:i A" }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
 
         <!-- Important Notice -->
         <div style="background:#e7f3ff;border-left:4px solid #0d6efd;border-radius:8px;padding:16px;margin-bottom:24px;">
@@ -30,8 +52,14 @@
                 <i class="bi bi-info-circle-fill me-2"></i>Resubmission Requirements
             </div>
             <ul style="font-size:13px;color:#084298;margin-bottom:0;padding-left:20px;">
+                {% if is_login_rejected %}
                 <li><strong>New login photo is REQUIRED</strong> - You must capture a fresh photo</li>
-                <li>Update your time in/out if needed</li>
+                <li>Update your login time if needed</li>
+                {% endif %}
+                {% if is_logout_rejected %}
+                <li><strong>New logout photo is recommended</strong> - Capture a new photo for the logout</li>
+                <li>Update your logout time if needed</li>
+                {% endif %}
                 <li>Add any additional notes to explain the correction</li>
                 <li>Your resubmission will be sent to supervisor for verification</li>
             </ul>
@@ -43,16 +71,36 @@
             
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Time In <span class="text-danger">*</span></label>
+                    <label class="form-label">
+                        Time In 
+                        {% if is_login_rejected %}
+                        <span class="text-danger">* (Needs correction)</span>
+                        {% endif %}
+                    </label>
                     <input type="time" name="time_in" class="form-control" 
-                           value="{{ rejected_dtr.time_in|time:'H:i' }}" required>
+                           value="{{ rejected_dtr.time_in|time:'H:i' }}" required
+                           {% if not is_login_rejected %}style="background:#d4edda;border-color:#28a745;"{% endif %}>
+                    {% if not is_login_rejected %}
+                    <small class="text-success"><i class="bi bi-check-circle"></i> Login was confirmed</small>
+                    {% endif %}
                 </div>
                 
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Time Out <span class="text-danger">*</span></label>
+                    <label class="form-label">
+                        Time Out 
+                        {% if is_logout_rejected %}
+                        <span class="text-danger">* (Needs correction)</span>
+                        {% endif %}
+                    </label>
                     <input type="time" name="time_out" class="form-control" 
                            value="{% if rejected_dtr.time_out %}{{ rejected_dtr.time_out|time:'H:i' }}{% endif %}" 
-                           {% if rejected_dtr.time_out %}required{% endif %}>
+                           {% if rejected_dtr.time_out %}required{% endif %}
+                           {% if rejected_dtr.time_out and not is_logout_rejected %}style="background:#d4edda;border-color:#28a745;"{% endif %}>
+                    {% if rejected_dtr.time_out and not is_logout_rejected %}
+                    <small class="text-success"><i class="bi bi-check-circle"></i> Logout was confirmed</small>
+                    {% elif not rejected_dtr.time_out %}
+                    <small class="text-muted">No logout recorded</small>
+                    {% endif %}
                 </div>
             </div>
 
@@ -64,22 +112,34 @@
 
             <!-- Selfie Section -->
             <div class="row">
+                <!-- Login Photo Section -->
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Login Photo <span class="text-danger">* (NEW PHOTO REQUIRED)</span></label>
-                    <div id="loginPhotoContainer" style="background:#fff3cd;border:2px dashed #ffc107;border-radius:12px;padding:16px;text-align:center;">
+                    <label class="form-label">
+                        Login Photo 
+                        {% if is_login_rejected %}
+                        <span class="text-danger">* (NEW PHOTO REQUIRED)</span>
+                        {% else %}
+                        <span class="text-success"><i class="bi bi-check-circle"></i> Confirmed</span>
+                        {% endif %}
+                    </label>
+                    <div id="loginPhotoContainer" style="background:{% if is_login_rejected %}#fff3cd;border:2px dashed #ffc107;{% else %}#d4edda;border:2px solid #28a745;{% endif %}border-radius:12px;padding:16px;text-align:center;">
                         <!-- Current Photo (will be hidden when new photo is captured) -->
                         <div id="currentLoginPhoto">
                             {% if rejected_dtr.selfie %}
-                            <img src="{{ rejected_dtr.selfie.url }}" alt="Rejected Login Photo" 
-                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #dc3545;opacity:0.5;">
+                            <img src="{{ rejected_dtr.selfie.url }}" alt="Login Photo" 
+                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid {% if is_login_rejected %}#dc3545{% else %}#28a745{% endif %};{% if is_login_rejected %}opacity:0.5;{% endif %}">
+                            {% if is_login_rejected %}
                             <p style="font-size:12px;color:#dc3545;font-weight:600;"><i class="bi bi-x-circle"></i> Old photo (REJECTED)</p>
+                            <p style="font-size:11px;color:#856404;margin-top:8px;"><i class="bi bi-exclamation-triangle"></i> You must capture a new photo</p>
+                            {% else %}
+                            <p style="font-size:12px;color:#28a745;font-weight:600;"><i class="bi bi-check-circle"></i> Confirmed photo</p>
+                            {% endif %}
                             {% else %}
                             <div style="padding:30px;color:#856404;">
                                 <i class="bi bi-camera" style="font-size:36px;"></i>
                                 <p class="mt-2 mb-0">No photo</p>
                             </div>
                             {% endif %}
-                            <p style="font-size:11px;color:#856404;margin-top:8px;"><i class="bi bi-exclamation-triangle"></i> You must capture a new photo</p>
                         </div>
                         <!-- New Photo Preview (hidden by default) -->
                         <div id="newLoginPhotoPreview" style="display:none;">
@@ -87,26 +147,47 @@
                                  style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #28a745;">
                             <p style="font-size:12px;color:#28a745;font-weight:600;"><i class="bi bi-check-circle"></i> New photo captured!</p>
                         </div>
+                        {% if is_login_rejected %}
                         <button type="button" class="btn btn-warning mt-2" onclick="captureLoginSelfie()">
                             <i class="bi bi-camera-fill me-1"></i>Capture NEW Login Photo
                         </button>
+                        {% endif %}
                         <input type="hidden" name="selfie_data" id="selfieData">
                     </div>
                 </div>
 
+                <!-- Logout Photo Section -->
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Logout Photo <span class="text-muted">(Optional)</span></label>
-                    <div style="background:#f8f9fa;border-radius:12px;padding:16px;text-align:center;">
+                    <label class="form-label">
+                        Logout Photo 
+                        {% if is_logout_rejected %}
+                        <span class="text-warning"><i class="bi bi-exclamation-triangle"></i> Recommended to update</span>
+                        {% elif rejected_dtr.time_out %}
+                        <span class="text-success"><i class="bi bi-check-circle"></i> Confirmed</span>
+                        {% else %}
+                        <span class="text-muted">(Not applicable)</span>
+                        {% endif %}
+                    </label>
+                    <div style="background:{% if is_logout_rejected %}#fff3cd;border:2px dashed #ffc107;{% elif rejected_dtr.time_out %}#d4edda;border:2px solid #28a745;{% else %}#f8f9fa;border:1px solid #ddd;{% endif %}border-radius:12px;padding:16px;text-align:center;">
                         <!-- Current Photo (will be hidden when new photo is captured) -->
                         <div id="currentLogoutPhoto">
                             {% if rejected_dtr.logout_selfie %}
-                            <img src="{{ rejected_dtr.logout_selfie.url }}" alt="Current Logout Photo" 
-                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #6c757d;">
-                            <p style="font-size:12px;color:#6c757d;">Current logout photo (will be kept if not changed)</p>
+                            <img src="{{ rejected_dtr.logout_selfie.url }}" alt="Logout Photo" 
+                                 style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid {% if is_logout_rejected %}#ffc107{% else %}#28a745{% endif %};">
+                            {% if is_logout_rejected %}
+                            <p style="font-size:12px;color:#856404;">Current photo (consider updating)</p>
                             {% else %}
+                            <p style="font-size:12px;color:#28a745;font-weight:600;"><i class="bi bi-check-circle"></i> Confirmed photo</p>
+                            {% endif %}
+                            {% elif rejected_dtr.time_out %}
                             <div style="padding:30px;color:#aaa;">
                                 <i class="bi bi-camera" style="font-size:36px;"></i>
                                 <p class="mt-2 mb-0">No photo</p>
+                            </div>
+                            {% else %}
+                            <div style="padding:30px;color:#aaa;">
+                                <i class="bi bi-lock" style="font-size:36px;"></i>
+                                <p class="mt-2 mb-0">No logout recorded</p>
                             </div>
                             {% endif %}
                         </div>
@@ -116,9 +197,11 @@
                                  style="width:100%;max-width:200px;border-radius:8px;margin-bottom:10px;border:3px solid #28a745;">
                             <p style="font-size:12px;color:#28a745;font-weight:600;"><i class="bi bi-check-circle"></i> New photo captured!</p>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="captureLogoutSelfie()">
-                            <i class="bi bi-camera me-1"></i>Capture New Logout Photo
+                        {% if rejected_dtr.time_out %}
+                        <button type="button" class="btn btn-sm {% if is_logout_rejected %}btn-warning{% else %}btn-outline-secondary{% endif %} mt-2" onclick="captureLogoutSelfie()">
+                            <i class="bi bi-camera me-1"></i>{% if is_logout_rejected %}Capture New Logout Photo{% else %}Update Photo (Optional){% endif %}
                         </button>
+                        {% endif %}
                         <input type="hidden" name="logout_selfie_data" id="logoutSelfieData">
                     </div>
                 </div>
@@ -181,16 +264,20 @@
 let loginStream = null;
 let logoutStream = null;
 let loginPhotoCaptured = false;
+const loginRejected = {{ is_login_rejected|yesno:"true,false" }};
 
 function validateForm() {
-    const selfieData = document.getElementById('selfieData').value;
-    
-    if (!selfieData || !selfieData.startsWith('data:image')) {
-        alert('Please capture a NEW login photo before resubmitting. This is required for verification.');
-        // Highlight the photo section
-        document.getElementById('loginPhotoContainer').style.border = '3px solid #dc3545';
-        document.getElementById('loginPhotoContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return false;
+    // Only require new login photo if login was rejected
+    if (loginRejected) {
+        const selfieData = document.getElementById('selfieData').value;
+        
+        if (!selfieData || !selfieData.startsWith('data:image')) {
+            alert('Please capture a NEW login photo before resubmitting. This is required for verification.');
+            // Highlight the photo section
+            document.getElementById('loginPhotoContainer').style.border = '3px solid #dc3545';
+            document.getElementById('loginPhotoContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
     }
     
     return true;
