@@ -95,7 +95,12 @@ class DTRLog(models.Model):
 
     notes = models.TextField(
         blank=True,
-        help_text="Optional notes about the day's activities"
+        help_text="Optional notes about the day's activities (login notes)"
+    )
+
+    logout_notes = models.TextField(
+        blank=True,
+        help_text="Notes about the day's activities added during logout"
     )
 
     # Supervisor confirmation status

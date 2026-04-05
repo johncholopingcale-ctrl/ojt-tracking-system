@@ -179,8 +179,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="id_notes" class="form-label"><i class="bi bi-chat-left-text me-1"></i>Notes (Optional)</label>
-                        <textarea name="notes" id="id_notes" class="form-control" rows="3" placeholder="Add or update notes about your work today..." {% if not can_logout %}disabled{% endif %}>{{ form.notes.value|default_if_none:'' }}</textarea>
+                        <label for="id_logout_notes" class="form-label"><i class="bi bi-chat-left-text me-1"></i>Logout Notes (Optional)</label>
+                        <textarea name="logout_notes" id="id_logout_notes" class="form-control" rows="3" placeholder="Add notes about your work accomplishments, tasks completed, or summary of your day..." {% if not can_logout %}disabled{% endif %}>{{ form.logout_notes.value|default_if_none:'' }}</textarea>
+                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>These notes will be reviewed by your supervisor during logout confirmation.</small>
                     </div>
 
                     <!-- Hidden field for base64 selfie data -->

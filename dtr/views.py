@@ -435,6 +435,10 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
                 messages.error(self.request, "Please capture a selfie before logging out.")
                 return self.form_invalid(form)
             
+            # Save logout notes if provided
+            logout_notes = self.request.POST.get('logout_notes', '')
+            form.instance.logout_notes = logout_notes
+            
             # Set logout confirmation status to pending (requires supervisor approval)
             form.instance.logout_confirmation_status = 'pending'
             # Keep overall status as pending until both are confirmed
