@@ -51,16 +51,8 @@ class Evaluation(OJTBaseModel):
     - work_quality: Rating 1-5
     - attitude: Rating 1-5
     - overall_rating: Rating 1-5
-    - recommendation: Final recommendation
     - notes: Additional comments
     """
-
-    # CLASS VARIABLES - recommendation choices
-    RECOMMENDATION_CHOICES = (
-        ('recommended', 'Recommended'),
-        ('not_recommended', 'Not Recommended'),
-        ('highly_recommended', 'Highly Recommended'),
-    )
 
     # RATING CHOICES for 1-5 star ratings
     RATING_CHOICES = (
@@ -102,12 +94,6 @@ class Evaluation(OJTBaseModel):
         help_text="Overall performance rating (1-5)"
     )
 
-    recommendation = models.CharField(
-        max_length=30,
-        choices=RECOMMENDATION_CHOICES,
-        help_text="Final recommendation"
-    )
-
     notes = models.TextField(
         blank=True,
         help_text="Additional comments and observations"
@@ -141,7 +127,7 @@ class Evaluation(OJTBaseModel):
         Returns:
             str: Human-readable evaluation summary
         """
-        return f"Rating: {self.overall_rating}/5 - {self.get_recommendation_display()}"
+        return f"Rating: {self.overall_rating}/5"
 
     def get_star_display(self, rating):
         """
@@ -172,24 +158,6 @@ class Evaluation(OJTBaseModel):
     def get_overall_rating_stars(self):
         """Get star display for overall rating."""
         return self.get_star_display(self.overall_rating)
-
-    def get_recommendation_badge_class(self):
-        """
-        Get Bootstrap badge class for recommendation.
-
-        OOP Concept: ENCAPSULATION
-        -------------------------
-        Hides the mapping logic for CSS classes.
-
-        Returns:
-            str: Bootstrap badge class
-        """
-        badge_classes = {
-            'recommended': 'badge-primary',
-            'not_recommended': 'badge-danger',
-            'highly_recommended': 'badge-success',
-        }
-        return badge_classes.get(self.recommendation, 'badge-secondary')
 
     def calculate_average(self):
         """

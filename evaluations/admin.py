@@ -10,8 +10,8 @@ from .models import Evaluation
 class EvaluationAdmin(admin.ModelAdmin):
     """Admin configuration for Evaluation model."""
 
-    list_display = ('student', 'supervisor', 'work_quality', 'attitude', 'overall_rating', 'recommendation', 'created_at')
-    list_filter = ('recommendation', 'created_at', 'work_quality', 'attitude')
+    list_display = ('student', 'supervisor', 'work_quality', 'attitude', 'overall_rating', 'created_at')
+    list_filter = ('created_at', 'work_quality', 'attitude')
     search_fields = ('student__username', 'supervisor__username', 'notes')
     readonly_fields = ('created_at', 'updated_at')
     date_hierarchy = 'created_at'
