@@ -7,7 +7,7 @@
 <!-- Welcome Banner -->
 <div class="dashboard-banner fade-up">
     <div class="banner-greeting">Welcome, {{ user.first_name|default:"Supervisor" }}! 👋</div>
-    <div class="banner-sub">CHMSU OJT Tracking System — Manage and evaluate your assigned interns</div>
+    <div class="banner-sub">OJT Management System — Manage and evaluate your assigned interns</div>
     <div class="banner-chips">
         <div class="banner-chip"><i class="bi bi-people-fill"></i> {{ intern_count }} Intern{{ intern_count|pluralize }}</div>
         <div class="banner-chip"><i class="bi bi-star-fill"></i> {{ evaluation_count }} Evaluation{{ evaluation_count|pluralize }}</div>
