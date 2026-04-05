@@ -347,15 +347,33 @@ class DTRLogOutView(StudentRequiredMixin, UpdateView):
     success_url = reverse_lazy('student:dtr_list')
     
     def get_object(self, queryset=None):
-        """Get today's DTR entry for the student."""
+        """Get the DTR entry for the student that needs logout.
+        
+        First tries today's date, then looks for any confirmed login without logout.
+        This handles resubmitted DTRs that were confirmed but have an earlier date.
+        """
         from datetime import date
-        try:
-            return DTRLog.objects.get(
-                student=self.request.user,
-                date=date.today()
-            )
-        except DTRLog.DoesNotExist:
-            return None
+        
+        # First, try to find today's DTR
+        today_dtr = DTRLog.objects.filter(
+            student=self.request.user,
+            date=date.today(),
+            is_valid=True
+        ).first()
+        
+        if today_dtr:
+            return today_dtr
+        
+        # If no today's DTR, look for any confirmed login without logout
+        # This handles resubmitted DTRs that keep their original date
+        confirmed_login = DTRLog.objects.filter(
+            student=self.request.user,
+            login_confirmation_status='confirmed',
+            time_out__isnull=True,
+            is_valid=True
+        ).order_by('-date').first()
+        
+        return confirmed_login
     
     def get_context_data(self, **kwargs):
         """Add login confirmation status to context."""
