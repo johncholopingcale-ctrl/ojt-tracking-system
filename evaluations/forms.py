@@ -17,7 +17,7 @@ class EvaluationForm(forms.ModelForm):
 
     class Meta:
         model = Evaluation
-        fields = ['work_quality', 'attitude', 'overall_rating', 'recommendation', 'notes']
+        fields = ['work_quality', 'attitude', 'overall_rating', 'notes']
         widgets = {
             'work_quality': forms.Select(attrs={
                 'class': 'form-control star-rating',
@@ -30,9 +30,6 @@ class EvaluationForm(forms.ModelForm):
                 'min': '1',
                 'max': '5',
                 'step': '0.5',
-            }),
-            'recommendation': forms.Select(attrs={
-                'class': 'form-control',
             }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
