@@ -32,10 +32,6 @@
                                 <i class="bi bi-star-fill"></i> {{ object.overall_rating }}/5
                             </span>
                         </div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                            <span style="color:#666;">Recommendation</span>
-                            <span style="font-weight:600;">{{ object.get_recommendation_display }}</span>
-                        </div>
                         <div style="display:flex;justify-content:space-between;">
                             <span style="color:#666;">Created</span>
                             <span>{{ object.created_at|date:"M d, Y" }}</span>
