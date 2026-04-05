@@ -180,10 +180,22 @@ class InternDTRView(SupervisorRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         student_id = self.kwargs.get('student_id')
+        queryset = self.get_queryset()
+        
         context['student'] = get_object_or_404(User, pk=student_id, role='student')
-        context['total_hours'] = self.get_queryset().aggregate(
+        context['total_hours'] = queryset.aggregate(
             total=Sum('hours_rendered')
         )['total'] or 0
+        
+        # Pending counts for this student
+        context['pending_login_count'] = queryset.filter(
+            login_confirmation_status='pending'
+        ).count()
+        context['pending_logout_count'] = queryset.filter(
+            logout_confirmation_status='pending',
+            time_out__isnull=False
+        ).count()
+        
         return context
 
 
