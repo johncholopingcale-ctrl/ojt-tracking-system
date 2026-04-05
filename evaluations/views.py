@@ -493,4 +493,18 @@ class PendingDTRListView(SupervisorRequiredMixin, ListView):
         context['pending_count'] = context['pending_login_count'] + context['pending_logout_count']
         context['current_filter'] = self.request.GET.get('filter', 'login')
         
+        # Count resubmissions for highlighting
+        context['resubmitted_login_count'] = DTRLog.objects.filter(
+            student_id__in=student_ids,
+            login_confirmation_status='pending',
+            is_resubmission=True
+        ).count()
+        
+        context['resubmitted_logout_count'] = DTRLog.objects.filter(
+            student_id__in=student_ids,
+            time_out__isnull=False,
+            logout_confirmation_status='pending',
+            is_resubmission=True
+        ).count()
+        
         return context

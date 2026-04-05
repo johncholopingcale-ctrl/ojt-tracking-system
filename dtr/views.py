@@ -624,7 +624,7 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
             
             # Determine what status to use based on what was rejected
             new_login_status = 'pending'
-            new_logout_status = None  # Will be None if no time_out
+            new_logout_status = 'pending'  # Default to pending (will be ignored if no time_out)
             
             # If login was rejected, require new login photo
             if is_login_rejected:

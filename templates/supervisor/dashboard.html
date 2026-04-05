@@ -15,6 +15,29 @@
     </div>
 </div>
 
+<!-- Resubmission Notice - Separate Alert -->
+{% if resubmitted_dtr_count > 0 %}
+<div class="alert fade-up mb-4" style="background:linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);border:2px solid #dc3545;border-radius:12px;padding:16px 20px;">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="background:#dc3545;color:#fff;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-arrow-clockwise" style="font-size:24px;"></i>
+        </div>
+        <div style="flex:1;">
+            <div style="font-weight:700;color:#721c24;font-size:15px;">
+                <i class="bi bi-exclamation-circle-fill me-1"></i>Resubmitted DTR{{ resubmitted_dtr_count|pluralize }} Needs Review
+            </div>
+            <div style="color:#721c24;font-size:13px;margin-top:4px;">
+                <strong>{{ resubmitted_dtr_count }}</strong> DTR{{ resubmitted_dtr_count|pluralize:" has,s have" }} been resubmitted after rejection. 
+                These require your immediate attention to verify the corrections made by the student{{ resubmitted_dtr_count|pluralize }}.
+            </div>
+        </div>
+        <a href="{% url 'supervisor:pending_dtr' %}?filter=login" class="btn btn-danger" style="border-radius:10px;font-weight:600;">
+            <i class="bi bi-eye me-1"></i> Review Resubmissions
+        </a>
+    </div>
+</div>
+{% endif %}
+
 <!-- Pending Confirmations Alert -->
 {% if pending_login_count > 0 or pending_logout_count > 0 %}
 <div class="alert fade-up mb-4" style="background:linear-gradient(135deg, #fff3cd 0%, #ffe9a0 100%);border:1px solid #ffc107;border-radius:12px;padding:16px 20px;">
@@ -32,11 +55,6 @@
                 {% endif %}
                 {% if pending_logout_count > 0 %}
                 <span><i class="bi bi-box-arrow-right me-1"></i><strong>{{ pending_logout_count }}</strong> logout{{ pending_logout_count|pluralize }} pending</span>
-                {% endif %}
-                {% if resubmitted_dtr_count > 0 %}
-                <span style="margin-left:16px;background:#dc3545;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">
-                    <i class="bi bi-arrow-clockwise me-1"></i>{{ resubmitted_dtr_count }} resubmission{{ resubmitted_dtr_count|pluralize }}
-                </span>
                 {% endif %}
             </div>
         </div>
