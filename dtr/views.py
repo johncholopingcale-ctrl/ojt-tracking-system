@@ -655,44 +655,44 @@ class DTRResubmitView(StudentRequiredMixin, TemplateView):
                     logout_selfie = rejected_dtr.logout_selfie
                     new_logout_status = 'confirmed'  # Keep confirmed status
             
-            # Create new DTR entry with appropriate statuses
-            new_dtr = DTRLog.objects.create(
-                student=request.user,
-                date=rejected_dtr.date,
-                time_in=time_in,
-                time_out=time_out if rejected_dtr.time_out else None,
-                selfie=selfie,
-                logout_selfie=logout_selfie,
-                notes=notes,
-                confirmation_status='pending',
-                login_confirmation_status=new_login_status,
-                logout_confirmation_status=new_logout_status,
-                is_resubmission=True,
-                is_valid=True
-            )
+            # Update the existing DTR entry instead of creating new one
+            # (to avoid unique constraint violation on student_id + date)
+            rejected_dtr.time_in = time_in
+            rejected_dtr.time_out = time_out if rejected_dtr.time_out else None
+            rejected_dtr.selfie = selfie
+            rejected_dtr.logout_selfie = logout_selfie
+            rejected_dtr.notes = notes
+            rejected_dtr.confirmation_status = 'pending'
+            rejected_dtr.login_confirmation_status = new_login_status
+            rejected_dtr.logout_confirmation_status = new_logout_status
+            rejected_dtr.is_resubmission = True
+            rejected_dtr.is_valid = True
             
-            # Copy confirmed_by info if login was already confirmed
-            if not is_login_rejected and rejected_dtr.login_confirmed_by:
-                new_dtr.login_confirmed_by = rejected_dtr.login_confirmed_by
-                new_dtr.login_confirmed_at = rejected_dtr.login_confirmed_at
-                new_dtr.save()
+            # Clear previous confirmation data for rejected fields
+            if is_login_rejected:
+                rejected_dtr.login_confirmed_by = None
+                rejected_dtr.login_confirmed_at = None
+                rejected_dtr.login_remarks = ''
             
-            # Copy logout confirmed_by info if logout was already confirmed
-            if rejected_dtr.time_out and not is_logout_rejected and rejected_dtr.logout_confirmed_by:
-                new_dtr.logout_confirmed_by = rejected_dtr.logout_confirmed_by
-                new_dtr.logout_confirmed_at = rejected_dtr.logout_confirmed_at
-                new_dtr.save()
+            if is_logout_rejected:
+                rejected_dtr.logout_confirmed_by = None
+                rejected_dtr.logout_confirmed_at = None
+                rejected_dtr.logout_remarks = ''
             
-            # Delete the old rejected DTR
-            rejected_dtr.delete()
+            # Clear overall confirmation data
+            rejected_dtr.confirmed_by = None
+            rejected_dtr.confirmed_at = None
+            rejected_dtr.confirmation_remarks = ''
+            
+            rejected_dtr.save()
             
             # Determine success message based on what was rejected
             if is_login_rejected and is_logout_rejected:
-                msg = f"DTR for {new_dtr.date} has been resubmitted! Both login and logout are pending supervisor verification."
+                msg = f"DTR for {rejected_dtr.date} has been resubmitted! Both login and logout are pending supervisor verification."
             elif is_login_rejected:
-                msg = f"DTR for {new_dtr.date} has been resubmitted! Login is pending supervisor verification."
+                msg = f"DTR for {rejected_dtr.date} has been resubmitted! Login is pending supervisor verification."
             else:
-                msg = f"DTR for {new_dtr.date} has been resubmitted! Logout is pending supervisor verification."
+                msg = f"DTR for {rejected_dtr.date} has been resubmitted! Logout is pending supervisor verification."
             
             messages.success(request, msg)
             return redirect('student:dtr_list')
